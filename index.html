@@ -318,15 +318,25 @@
         <div class="loading-spinner"></div>
         <div class="loading-text">Memuat data...</div>
         <div class="loading-subtext" style="font-size: 11px; color: var(--gray-500); margin-top: 8px;">Menghubungkan ke Firebase...</div>
-        <button onclick="hideLoading(); checkSession();" style="margin-top: 20px; padding: 10px 20px; background: transparent; border: 1px solid var(--gray-500); border-radius: 8px; color: var(--gray-400); cursor: pointer; font-size: 12px; display: none;" id="skipLoadingBtn">Lewati →</button>
+        <button id="skipLoadingBtn" style="margin-top: 20px; padding: 10px 20px; background: transparent; border: 1px solid var(--gray-500); border-radius: 8px; color: var(--gray-400); cursor: pointer; font-size: 12px; display: none;">Lewati →</button>
     </div>
     
     <script>
         // Show skip button after 3 seconds
-        setTimeout(() => {
-            const btn = document.getElementById('skipLoadingBtn');
+        setTimeout(function() {
+            var btn = document.getElementById('skipLoadingBtn');
             if (btn) btn.style.display = 'block';
         }, 3000);
+        
+        // Skip button click handler
+        document.addEventListener('DOMContentLoaded', function() {
+            var skipBtn = document.getElementById('skipLoadingBtn');
+            if (skipBtn) {
+                skipBtn.addEventListener('click', function() {
+                    document.getElementById('loadingOverlay').classList.add('hide');
+                });
+            }
+        });
     </script>
 
     <!-- ==================== LOGIN PAGE ==================== -->
@@ -1628,7 +1638,6 @@
             dots.forEach((dot, i) => {
                 dot.classList.toggle('active', i === activeIndex);
             });
-        }
         }
         
         window.searchProducts = function() {
