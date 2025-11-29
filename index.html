@@ -3,7 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://www.gstatic.com https://*.googleapis.com https://*.firebaseio.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob: https://*.googleapis.com https://*.googleusercontent.com https://firebasestorage.googleapis.com; connect-src 'self' https://*.googleapis.com https://*.google.com https://*.firebaseio.com https://*.cloudfunctions.net wss://*.firebaseio.com;">
     <title>Nala Aircon - Marketplace AC Multi Brand</title>
+    
+    <!-- Preconnect to Firebase for faster loading -->
+    <link rel="preconnect" href="https://www.gstatic.com">
+    <link rel="preconnect" href="https://firebasestorage.googleapis.com">
+    <link rel="preconnect" href="https://firestore.googleapis.com">
+    
     <link rel="icon" type="image/png" href="https://firebasestorage.googleapis.com/v0/b/databasebesar.firebasestorage.app/o/marketplace%2Flogo%2Flogo-nala.png?alt=media">
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
     <style>
@@ -310,7 +317,17 @@
     <div class="loading-overlay" id="loadingOverlay">
         <div class="loading-spinner"></div>
         <div class="loading-text">Memuat data...</div>
+        <div class="loading-subtext" style="font-size: 11px; color: var(--gray-500); margin-top: 8px;">Menghubungkan ke Firebase...</div>
+        <button onclick="hideLoading(); checkSession();" style="margin-top: 20px; padding: 10px 20px; background: transparent; border: 1px solid var(--gray-500); border-radius: 8px; color: var(--gray-400); cursor: pointer; font-size: 12px; display: none;" id="skipLoadingBtn">Lewati →</button>
     </div>
+    
+    <script>
+        // Show skip button after 3 seconds
+        setTimeout(() => {
+            const btn = document.getElementById('skipLoadingBtn');
+            if (btn) btn.style.display = 'block';
+        }, 3000);
+    </script>
 
     <!-- ==================== LOGIN PAGE ==================== -->
     <div class="login-page" id="loginPage">
@@ -813,8 +830,16 @@
             return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(price);
         }
         function generateId() { return Date.now().toString(36) + Math.random().toString(36).substr(2); }
-        function showLoading() { document.getElementById('loadingOverlay').classList.remove('hide'); }
+        function showLoading(text = 'Memuat data...') { 
+            document.getElementById('loadingOverlay').classList.remove('hide'); 
+            document.querySelector('.loading-text').textContent = text;
+        }
         function hideLoading() { document.getElementById('loadingOverlay').classList.add('hide'); }
+        
+        // Force hide loading after 10 seconds (fallback)
+        setTimeout(() => {
+            hideLoading();
+        }, 10000);
         
         function showToast(message, type = 'success') {
             const toast = document.getElementById('toast');
@@ -834,24 +859,26 @@
 
         // ==================== FIREBASE FUNCTIONS ====================
         async function loadAllData() {
-            showLoading();
+            showLoading('Menghubungkan ke database...');
             try {
-                // Load brands
-                const brandsSnap = await getDocs(collection(db, COLLECTIONS.brands));
-                brands = brandsSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                // Load all data in parallel for faster loading
+                showLoading('Memuat data...');
                 
-                // Load products
-                const productsSnap = await getDocs(collection(db, COLLECTIONS.products));
+                const [brandsSnap, productsSnap, settingsDoc, pricingDoc] = await Promise.all([
+                    getDocs(collection(db, COLLECTIONS.brands)),
+                    getDocs(collection(db, COLLECTIONS.products)),
+                    getDoc(doc(db, COLLECTIONS.settings, 'config')),
+                    getDoc(doc(db, COLLECTIONS.pricing, 'config'))
+                ]);
+                
+                // Process results
+                brands = brandsSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
                 products = productsSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
                 
-                // Load settings
-                const settingsDoc = await getDoc(doc(db, COLLECTIONS.settings, 'config'));
                 if (settingsDoc.exists()) {
                     settings = { ...settings, ...settingsDoc.data() };
                 }
                 
-                // Load pricing
-                const pricingDoc = await getDoc(doc(db, COLLECTIONS.pricing, 'config'));
                 if (pricingDoc.exists()) {
                     pricing = { ...pricing, ...pricingDoc.data() };
                 }
@@ -859,7 +886,8 @@
                 console.log('✅ Data loaded:', { brands: brands.length, products: products.length });
             } catch (error) {
                 console.error('Error loading data:', error);
-                showToast('Gagal memuat data', 'error');
+                // Still allow app to work with defaults
+                console.log('⚠️ Using default data');
             }
             hideLoading();
         }
@@ -1493,16 +1521,22 @@
                 const images = p.images && p.images.length > 0 ? p.images : (p.imageUrl ? [p.imageUrl] : []);
                 const hasMultipleImages = images.length > 1;
                 
+                // Store images in a global object instead of data attribute
+                if (images.length > 0) {
+                    window.productImages = window.productImages || {};
+                    window.productImages[p.id] = images;
+                }
+                
                 return `
-                <div class="product-card" onclick="openRABModal('${p.id}')">
+                <div class="product-card" data-product-id="${p.id}">
                     <div class="product-image" id="carousel-${p.id}">
                         ${images.length > 0 ? `
-                            <img src="${images[0]}" alt="${p.name}" id="carouselImg-${p.id}" data-images='${JSON.stringify(images)}' data-index="0">
+                            <img src="${images[0]}" alt="${p.name}" id="carouselImg-${p.id}" data-index="0">
                             ${hasMultipleImages ? `
-                                <button class="carousel-nav prev" onclick="event.stopPropagation(); changeImage('${p.id}', -1)">‹</button>
-                                <button class="carousel-nav next" onclick="event.stopPropagation(); changeImage('${p.id}', 1)">›</button>
+                                <button class="carousel-nav prev" data-product="${p.id}" data-dir="-1">‹</button>
+                                <button class="carousel-nav next" data-product="${p.id}" data-dir="1">›</button>
                                 <div class="carousel-dots">
-                                    ${images.map((_, i) => `<span class="carousel-dot ${i === 0 ? 'active' : ''}" onclick="event.stopPropagation(); goToImage('${p.id}', ${i})"></span>`).join('')}
+                                    ${images.map((_, i) => `<span class="carousel-dot ${i === 0 ? 'active' : ''}" data-product="${p.id}" data-index="${i}"></span>`).join('')}
                                 </div>
                             ` : ''}
                         ` : `<div class="product-image-placeholder"><span class="ac-icon">❄️</span><span>${getBrandName(p.brand)}</span></div>`}
@@ -1521,19 +1555,54 @@
                         </div>
                         <div class="product-price">${formatPrice(p.price)}</div>
                         <div class="product-actions">
-                            <button class="btn btn-primary" onclick="event.stopPropagation(); openRABModal('${p.id}')">+ Keranjang</button>
+                            <button class="btn btn-primary add-to-cart-btn" data-product-id="${p.id}">+ Keranjang</button>
                         </div>
                     </div>
                 </div>
             `;}).join('');
             
             document.getElementById('productCount').textContent = `${filtered.length} Produk`;
+            
+            // Add event listeners for product cards
+            document.querySelectorAll('.product-card').forEach(card => {
+                card.addEventListener('click', function(e) {
+                    if (!e.target.closest('.carousel-nav') && !e.target.closest('.carousel-dot') && !e.target.closest('.add-to-cart-btn')) {
+                        openRABModal(this.dataset.productId);
+                    }
+                });
+            });
+            
+            // Add event listeners for add to cart buttons
+            document.querySelectorAll('.add-to-cart-btn').forEach(btn => {
+                btn.addEventListener('click', function(e) {
+                    e.stopPropagation();
+                    openRABModal(this.dataset.productId);
+                });
+            });
+            
+            // Add event listeners for carousel navigation
+            document.querySelectorAll('.carousel-nav').forEach(btn => {
+                btn.addEventListener('click', function(e) {
+                    e.stopPropagation();
+                    changeImage(this.dataset.product, parseInt(this.dataset.dir));
+                });
+            });
+            
+            // Add event listeners for carousel dots
+            document.querySelectorAll('.carousel-dot').forEach(dot => {
+                dot.addEventListener('click', function(e) {
+                    e.stopPropagation();
+                    goToImage(this.dataset.product, parseInt(this.dataset.index));
+                });
+            });
         }
         
         // Carousel functions
         window.changeImage = function(productId, direction) {
             const img = document.getElementById('carouselImg-' + productId);
-            const images = JSON.parse(img.dataset.images);
+            const images = window.productImages[productId];
+            if (!images) return;
+            
             let index = parseInt(img.dataset.index) + direction;
             if (index < 0) index = images.length - 1;
             if (index >= images.length) index = 0;
@@ -1544,7 +1613,9 @@
         
         window.goToImage = function(productId, index) {
             const img = document.getElementById('carouselImg-' + productId);
-            const images = JSON.parse(img.dataset.images);
+            const images = window.productImages[productId];
+            if (!images) return;
+            
             img.src = images[index];
             img.dataset.index = index;
             updateCarouselDots(productId, index);
@@ -1552,6 +1623,7 @@
         
         function updateCarouselDots(productId, activeIndex) {
             const carousel = document.getElementById('carousel-' + productId);
+            if (!carousel) return;
             const dots = carousel.querySelectorAll('.carousel-dot');
             dots.forEach((dot, i) => {
                 dot.classList.toggle('active', i === activeIndex);
@@ -1567,21 +1639,50 @@
             });
             
             const grid = document.getElementById('productsGrid');
-            grid.innerHTML = filtered.map(p => `
-                <div class="product-card" onclick="openRABModal('${p.id}')">
+            
+            // Store images for filtered products
+            window.productImages = window.productImages || {};
+            filtered.forEach(p => {
+                const images = p.images && p.images.length > 0 ? p.images : (p.imageUrl ? [p.imageUrl] : []);
+                if (images.length > 0) {
+                    window.productImages[p.id] = images;
+                }
+            });
+            
+            grid.innerHTML = filtered.map(p => {
+                const images = p.images && p.images.length > 0 ? p.images : (p.imageUrl ? [p.imageUrl] : []);
+                return `
+                <div class="product-card" data-product-id="${p.id}">
                     <div class="product-image">
-                        ${p.imageUrl ? `<img src="${p.imageUrl}">` : `<div class="product-image-placeholder"><span class="ac-icon">❄️</span></div>`}
+                        ${images.length > 0 ? `<img src="${images[0]}">` : `<div class="product-image-placeholder"><span class="ac-icon">❄️</span></div>`}
                         <div class="product-badges"><span class="badge badge-brand">${getBrandName(p.brand)}</span></div>
                     </div>
                     <div class="product-info">
                         <div class="product-brand">${getBrandName(p.brand)}</div>
                         <div class="product-name">${p.name} ${p.pk} PK</div>
                         <div class="product-price">${formatPrice(p.price)}</div>
-                        <div class="product-actions"><button class="btn btn-primary" onclick="event.stopPropagation(); openRABModal('${p.id}')">+ Keranjang</button></div>
+                        <div class="product-actions"><button class="btn btn-primary add-to-cart-btn" data-product-id="${p.id}">+ Keranjang</button></div>
                     </div>
                 </div>
-            `).join('');
+            `;}).join('');
+            
             document.getElementById('productCount').textContent = `${filtered.length} Produk`;
+            
+            // Re-attach event listeners
+            document.querySelectorAll('.product-card').forEach(card => {
+                card.addEventListener('click', function(e) {
+                    if (!e.target.closest('.add-to-cart-btn')) {
+                        openRABModal(this.dataset.productId);
+                    }
+                });
+            });
+            
+            document.querySelectorAll('.add-to-cart-btn').forEach(btn => {
+                btn.addEventListener('click', function(e) {
+                    e.stopPropagation();
+                    openRABModal(this.dataset.productId);
+                });
+            });
         }
 
         // ==================== RAB MODAL ====================
@@ -1826,10 +1927,28 @@
 
         // ==================== INIT ====================
         document.addEventListener('DOMContentLoaded', async function() {
-            await loadAllData();
+            console.log('🏪 Nala Aircon Marketplace - Starting...');
+            
+            // Small delay to ensure Firebase SDK is ready
+            await new Promise(resolve => setTimeout(resolve, 100));
+            
+            try {
+                await loadAllData();
+            } catch (e) {
+                console.error('Init error:', e);
+                hideLoading();
+            }
+            
             checkSession();
             updateMarketplaceLogo();
-            console.log('🏪 Nala Aircon Marketplace - Firebase Connected!');
+            console.log('🏪 Nala Aircon Marketplace - Ready!');
+        });
+        
+        // Fallback: If page fully loaded but still showing loading, hide it
+        window.addEventListener('load', function() {
+            setTimeout(() => {
+                hideLoading();
+            }, 5000);
         });
     </script>
 </body>
