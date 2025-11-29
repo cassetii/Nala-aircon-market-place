@@ -137,6 +137,32 @@
         .upload-progress { position: absolute; bottom: 10px; left: 10px; right: 10px; height: 4px; background: rgba(255,255,255,0.1); border-radius: 2px; overflow: hidden; }
         .upload-progress-bar { height: 100%; background: var(--primary); transition: width 0.3s ease; }
         
+        /* Multi Upload Grid */
+        .multi-upload-container { width: 100%; }
+        .multi-upload-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px; }
+        @media (max-width: 600px) { .multi-upload-grid { grid-template-columns: repeat(3, 1fr); } }
+        .multi-upload-box { aspect-ratio: 1; background: var(--dark-hover); border: 2px dashed rgba(255, 255, 255, 0.2); border-radius: 12px; display: flex; flex-direction: column; align-items: center; justify-content: center; cursor: pointer; transition: all 0.3s ease; position: relative; overflow: hidden; }
+        .multi-upload-box:hover { border-color: var(--primary); background: rgba(0, 169, 224, 0.1); }
+        .multi-upload-box.has-image { border-style: solid; border-color: var(--success); padding: 0; }
+        .multi-upload-box .upload-icon { font-size: 24px; margin-bottom: 4px; }
+        .multi-upload-box .upload-text { font-size: 10px; color: var(--gray-500); }
+        .multi-upload-box .upload-number { position: absolute; top: 4px; left: 4px; background: var(--primary); color: white; width: 18px; height: 18px; border-radius: 50%; font-size: 10px; font-weight: 700; display: flex; align-items: center; justify-content: center; }
+        .multi-upload-box img { width: 100%; height: 100%; object-fit: cover; border-radius: 10px; }
+        .multi-upload-box .remove-image { position: absolute; top: 4px; right: 4px; background: var(--danger); color: white; width: 20px; height: 20px; border-radius: 50%; font-size: 12px; border: none; cursor: pointer; display: none; align-items: center; justify-content: center; }
+        .multi-upload-box.has-image .remove-image { display: flex; }
+        .multi-upload-box .remove-image:hover { transform: scale(1.1); }
+        
+        /* Product Image Carousel */
+        .product-carousel { position: relative; width: 100%; height: 100%; }
+        .product-carousel img { width: 100%; height: 100%; object-fit: cover; }
+        .carousel-dots { position: absolute; bottom: 8px; left: 50%; transform: translateX(-50%); display: flex; gap: 4px; }
+        .carousel-dot { width: 6px; height: 6px; border-radius: 50%; background: rgba(255,255,255,0.4); cursor: pointer; transition: all 0.3s; }
+        .carousel-dot.active { background: white; width: 16px; border-radius: 3px; }
+        .carousel-nav { position: absolute; top: 50%; transform: translateY(-50%); background: rgba(0,0,0,0.5); color: white; border: none; width: 24px; height: 24px; border-radius: 50%; cursor: pointer; font-size: 12px; display: flex; align-items: center; justify-content: center; opacity: 0; transition: opacity 0.3s; }
+        .product-image:hover .carousel-nav { opacity: 1; }
+        .carousel-nav.prev { left: 8px; }
+        .carousel-nav.next { right: 8px; }
+        
         /* ==================== MODAL ==================== */
         .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.8); backdrop-filter: blur(10px); z-index: 1000; display: flex; align-items: center; justify-content: center; padding: 20px; opacity: 0; visibility: hidden; transition: all 0.3s ease; }
         .modal-overlay.show { opacity: 1; visibility: visible; }
@@ -604,16 +630,14 @@
             <div class="modal-body">
                 <input type="hidden" id="productId">
                 <div class="form-group">
-                    <label class="form-label">Gambar Produk</label>
-                    <div class="upload-box" id="productImageUploadBox" onclick="document.getElementById('productImageFile').click()">
-                        <input type="file" id="productImageFile" accept="image/*" style="display:none" onchange="previewProductImage(this)">
-                        <div class="upload-placeholder" id="productImagePlaceholder">
-                            <span style="font-size: 50px;">📷</span>
-                            <p>Upload Gambar Produk</p>
-                            <small>PNG/JPG, max 2MB</small>
+                    <label class="form-label">Gambar Produk (Maksimal 5 Gambar)</label>
+                    <div class="multi-upload-container" id="multiUploadContainer">
+                        <div class="multi-upload-grid" id="multiUploadGrid">
+                            <!-- Upload boxes will be rendered here -->
                         </div>
-                        <img id="productImagePreview" class="upload-preview" style="display:none">
-                        <div class="upload-progress" id="productImageProgress" style="display:none"><div class="upload-progress-bar" id="productImageProgressBar"></div></div>
+                        <div class="upload-progress" id="productImageProgress" style="display:none; margin-top: 10px;">
+                            <div class="upload-progress-bar" id="productImageProgressBar"></div>
+                        </div>
                     </div>
                 </div>
                 <div class="form-row">
@@ -781,7 +805,8 @@
         let checkoutStep = 1;
         let customerData = {};
         let tempBrandLogo = null;
-        let tempProductImage = null;
+        let tempProductImages = [null, null, null, null, null]; // 5 slots for images
+        let existingProductImages = []; // URLs of existing images when editing
 
         // ==================== UTILITY ====================
         function formatPrice(price) {
@@ -1084,9 +1109,19 @@
             document.getElementById('productsTable').innerHTML = `
                 <table class="admin-table">
                     <thead><tr><th>Gambar</th><th>Produk</th><th>Brand</th><th>PK</th><th>Tipe</th><th>Harga</th><th>Aksi</th></tr></thead>
-                    <tbody>${products.map(p => `
+                    <tbody>${products.map(p => {
+                        const images = p.images && p.images.length > 0 ? p.images : (p.imageUrl ? [p.imageUrl] : []);
+                        const imageCount = images.length;
+                        return `
                         <tr>
-                            <td>${p.imageUrl ? `<img src="${p.imageUrl}" style="width:50px;height:40px;border-radius:8px;object-fit:cover;">` : '❄️'}</td>
+                            <td>
+                                ${images.length > 0 ? `
+                                    <div style="position: relative; display: inline-block;">
+                                        <img src="${images[0]}" style="width:50px;height:40px;border-radius:8px;object-fit:cover;">
+                                        ${imageCount > 1 ? `<span style="position:absolute;bottom:-2px;right:-2px;background:var(--primary);color:white;font-size:9px;padding:2px 5px;border-radius:8px;">+${imageCount-1}</span>` : ''}
+                                    </div>
+                                ` : '❄️'}
+                            </td>
                             <td><strong>${p.name}</strong></td>
                             <td><span class="badge badge-primary">${getBrandName(p.brand)}</span></td>
                             <td>${p.pk} PK</td>
@@ -1099,7 +1134,7 @@
                                 </div>
                             </td>
                         </tr>
-                    `).join('')}</tbody>
+                    `;}).join('')}</tbody>
                 </table>`;
         }
         
@@ -1107,10 +1142,10 @@
             document.getElementById('productId').value = id || '';
             document.getElementById('productModalTitle').textContent = id ? 'Edit Produk' : 'Tambah Produk';
             document.getElementById('productBrand').innerHTML = brands.map(b => `<option value="${b.id}">${b.name}</option>`).join('');
-            document.getElementById('productImagePreview').style.display = 'none';
-            document.getElementById('productImagePlaceholder').style.display = 'flex';
-            document.getElementById('productImageUploadBox').classList.remove('has-image');
-            tempProductImage = null;
+            
+            // Reset temp images
+            tempProductImages = [null, null, null, null, null];
+            existingProductImages = [];
             
             if (id) {
                 const p = products.find(x => x.id === id);
@@ -1123,11 +1158,12 @@
                 document.getElementById('productPrice').value = p.price;
                 document.getElementById('productCategory').value = p.category;
                 document.getElementById('productFeatures').value = (p.features || []).join(', ');
-                if (p.imageUrl) {
-                    document.getElementById('productImagePreview').src = p.imageUrl;
-                    document.getElementById('productImagePreview').style.display = 'block';
-                    document.getElementById('productImagePlaceholder').style.display = 'none';
-                    document.getElementById('productImageUploadBox').classList.add('has-image');
+                
+                // Load existing images
+                if (p.images && p.images.length > 0) {
+                    existingProductImages = [...p.images];
+                } else if (p.imageUrl) {
+                    existingProductImages = [p.imageUrl];
                 }
             } else {
                 document.getElementById('productName').value = '';
@@ -1139,26 +1175,61 @@
                 document.getElementById('productCategory').value = 'small';
                 document.getElementById('productFeatures').value = '';
             }
+            
+            renderMultiUploadGrid();
             document.getElementById('productModal').classList.add('show');
         }
-        window.closeProductModal = function() { document.getElementById('productModal').classList.remove('show'); }
-        window.editProduct = function(id) { window.openProductModal(id); }
         
-        window.previewProductImage = function(input) {
+        function renderMultiUploadGrid() {
+            const grid = document.getElementById('multiUploadGrid');
+            let html = '';
+            for (let i = 0; i < 5; i++) {
+                const hasExisting = existingProductImages[i];
+                const hasTemp = tempProductImages[i];
+                const hasImage = hasExisting || hasTemp;
+                
+                html += `
+                    <div class="multi-upload-box ${hasImage ? 'has-image' : ''}" onclick="triggerImageUpload(${i})">
+                        <input type="file" id="productImage${i}" accept="image/*" style="display:none" onchange="handleMultiImageUpload(this, ${i})">
+                        <span class="upload-number">${i + 1}</span>
+                        ${hasImage ? `
+                            <img src="${hasTemp ? URL.createObjectURL(hasTemp) : hasExisting}" alt="Gambar ${i + 1}">
+                            <button class="remove-image" onclick="event.stopPropagation(); removeProductImage(${i})">×</button>
+                        ` : `
+                            <span class="upload-icon">📷</span>
+                            <span class="upload-text">Upload</span>
+                        `}
+                    </div>
+                `;
+            }
+            grid.innerHTML = html;
+        }
+        
+        window.triggerImageUpload = function(index) {
+            document.getElementById('productImage' + index).click();
+        }
+        
+        window.handleMultiImageUpload = function(input, index) {
             if (input.files && input.files[0]) {
                 const file = input.files[0];
-                if (file.size > 2 * 1024 * 1024) { showToast('Max 2MB!', 'error'); return; }
-                tempProductImage = file;
-                const reader = new FileReader();
-                reader.onload = function(e) {
-                    document.getElementById('productImagePreview').src = e.target.result;
-                    document.getElementById('productImagePreview').style.display = 'block';
-                    document.getElementById('productImagePlaceholder').style.display = 'none';
-                    document.getElementById('productImageUploadBox').classList.add('has-image');
-                };
-                reader.readAsDataURL(file);
+                if (file.size > 2 * 1024 * 1024) { 
+                    showToast('Max 2MB!', 'error'); 
+                    return; 
+                }
+                tempProductImages[index] = file;
+                existingProductImages[index] = null; // Clear existing if uploading new
+                renderMultiUploadGrid();
             }
         }
+        
+        window.removeProductImage = function(index) {
+            tempProductImages[index] = null;
+            existingProductImages[index] = null;
+            renderMultiUploadGrid();
+        }
+        
+        window.closeProductModal = function() { document.getElementById('productModal').classList.remove('show'); }
+        window.editProduct = function(id) { window.openProductModal(id); }
         
         window.saveProduct = async function() {
             const id = document.getElementById('productId').value;
@@ -1179,20 +1250,31 @@
             btn.innerHTML = '⏳ Menyimpan...';
             
             try {
-                let imageUrl = '';
-                const existingProduct = products.find(p => p.id === id);
-                if (existingProduct) imageUrl = existingProduct.imageUrl || '';
+                // Collect all images (existing + new uploads)
+                let images = [];
                 
-                if (tempProductImage) {
-                    document.getElementById('productImageProgress').style.display = 'block';
-                    const fileName = `${Date.now()}_${tempProductImage.name}`;
-                    imageUrl = await uploadFile(tempProductImage, STORAGE_PATHS.products + fileName, (progress) => {
-                        document.getElementById('productImageProgressBar').style.width = progress + '%';
-                    });
-                    document.getElementById('productImageProgress').style.display = 'none';
+                document.getElementById('productImageProgress').style.display = 'block';
+                
+                for (let i = 0; i < 5; i++) {
+                    if (tempProductImages[i]) {
+                        // Upload new image
+                        const fileName = `${Date.now()}_${i}_${tempProductImages[i].name}`;
+                        const url = await uploadFile(tempProductImages[i], STORAGE_PATHS.products + fileName, (progress) => {
+                            document.getElementById('productImageProgressBar').style.width = ((i * 20) + (progress / 5)) + '%';
+                        });
+                        images.push(url);
+                    } else if (existingProductImages[i]) {
+                        // Keep existing image
+                        images.push(existingProductImages[i]);
+                    }
                 }
                 
-                const productData = { brand, name, pk, type, btu, watt, price, category, features, imageUrl, updatedAt: new Date().toISOString() };
+                document.getElementById('productImageProgress').style.display = 'none';
+                
+                // For backward compatibility, also set imageUrl to first image
+                const imageUrl = images.length > 0 ? images[0] : '';
+                
+                const productData = { brand, name, pk, type, btu, watt, price, category, features, images, imageUrl, updatedAt: new Date().toISOString() };
                 
                 if (id) {
                     await updateDoc(doc(db, COLLECTIONS.products, id), productData);
@@ -1407,10 +1489,23 @@
                 return;
             }
             
-            grid.innerHTML = filtered.map(p => `
+            grid.innerHTML = filtered.map(p => {
+                const images = p.images && p.images.length > 0 ? p.images : (p.imageUrl ? [p.imageUrl] : []);
+                const hasMultipleImages = images.length > 1;
+                
+                return `
                 <div class="product-card" onclick="openRABModal('${p.id}')">
-                    <div class="product-image">
-                        ${p.imageUrl ? `<img src="${p.imageUrl}" alt="${p.name}">` : `<div class="product-image-placeholder"><span class="ac-icon">❄️</span><span>${getBrandName(p.brand)}</span></div>`}
+                    <div class="product-image" id="carousel-${p.id}">
+                        ${images.length > 0 ? `
+                            <img src="${images[0]}" alt="${p.name}" id="carouselImg-${p.id}" data-images='${JSON.stringify(images)}' data-index="0">
+                            ${hasMultipleImages ? `
+                                <button class="carousel-nav prev" onclick="event.stopPropagation(); changeImage('${p.id}', -1)">‹</button>
+                                <button class="carousel-nav next" onclick="event.stopPropagation(); changeImage('${p.id}', 1)">›</button>
+                                <div class="carousel-dots">
+                                    ${images.map((_, i) => `<span class="carousel-dot ${i === 0 ? 'active' : ''}" onclick="event.stopPropagation(); goToImage('${p.id}', ${i})"></span>`).join('')}
+                                </div>
+                            ` : ''}
+                        ` : `<div class="product-image-placeholder"><span class="ac-icon">❄️</span><span>${getBrandName(p.brand)}</span></div>`}
                         <div class="product-badges">
                             <span class="badge badge-brand">${getBrandName(p.brand)}</span>
                             ${p.features && p.features.includes('Inverter') ? '<span class="badge badge-inverter">INVERTER</span>' : ''}
@@ -1430,9 +1525,38 @@
                         </div>
                     </div>
                 </div>
-            `).join('');
+            `;}).join('');
             
             document.getElementById('productCount').textContent = `${filtered.length} Produk`;
+        }
+        
+        // Carousel functions
+        window.changeImage = function(productId, direction) {
+            const img = document.getElementById('carouselImg-' + productId);
+            const images = JSON.parse(img.dataset.images);
+            let index = parseInt(img.dataset.index) + direction;
+            if (index < 0) index = images.length - 1;
+            if (index >= images.length) index = 0;
+            img.src = images[index];
+            img.dataset.index = index;
+            updateCarouselDots(productId, index);
+        }
+        
+        window.goToImage = function(productId, index) {
+            const img = document.getElementById('carouselImg-' + productId);
+            const images = JSON.parse(img.dataset.images);
+            img.src = images[index];
+            img.dataset.index = index;
+            updateCarouselDots(productId, index);
+        }
+        
+        function updateCarouselDots(productId, activeIndex) {
+            const carousel = document.getElementById('carousel-' + productId);
+            const dots = carousel.querySelectorAll('.carousel-dot');
+            dots.forEach((dot, i) => {
+                dot.classList.toggle('active', i === activeIndex);
+            });
+        }
         }
         
         window.searchProducts = function() {
