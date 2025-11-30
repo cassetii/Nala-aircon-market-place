@@ -756,6 +756,20 @@
                         </select>
                     </div>
                 </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label">🔧 Ukuran Pipa</label>
+                        <select class="form-input" id="productPipeSize">
+                            <!-- Options will be populated dynamically -->
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">⚡ Ukuran Kabel</label>
+                        <select class="form-input" id="productCableSize">
+                            <!-- Options will be populated dynamically -->
+                        </select>
+                    </div>
+                </div>
                 <div class="form-group">
                     <label class="form-label">Fitur (pisahkan dengan koma)</label>
                     <input type="text" class="form-input" id="productFeatures" placeholder="Inverter, Low Watt, WiFi">
@@ -854,11 +868,29 @@
         let brands = [];
         let products = [];
         let pricing = {
-            pipeSmall: 100000, pipeLarge: 125000,
-            cableSmall: 18000, cableLarge: 25000,
-            ducting: 12500, bracket: 75000,
-            installSmall: 350000, installLarge: 450000,
-            pipePulling: 25000
+            // Harga pipa per ukuran (per meter)
+            pipes: {
+                '1/4-3/8': { name: '1/4" × 3/8"', price: 85000 },
+                '1/4-1/2': { name: '1/4" × 1/2"', price: 100000 },
+                '3/8-5/8': { name: '3/8" × 5/8"', price: 125000 },
+                '1/4-3/4': { name: '1/4" × 3/4"', price: 150000 }
+            },
+            // Harga kabel per ukuran (per meter)
+            cables: {
+                '2x1.5': { name: '2 × 1,5 mm²', price: 12000 },
+                '2x2.5': { name: '2 × 2,5 mm²', price: 18000 },
+                '3x1.5': { name: '3 × 1,5 mm²', price: 18000 },
+                '3x2.5': { name: '3 × 2,5 mm²', price: 25000 },
+                '4x1.5': { name: '4 × 1,5 mm²', price: 22000 },
+                '4x2.5': { name: '4 × 2,5 mm²', price: 32000 }
+            },
+            // Material lain
+            ducting: 12500,
+            bracket: 75000,
+            pipePulling: 25000,
+            // Jasa instalasi
+            installSmall: 350000,
+            installLarge: 450000
         };
         let settings = {
             storeName: 'Nala Aircon',
@@ -1189,10 +1221,12 @@
             }
             document.getElementById('productsTable').innerHTML = `
                 <table class="admin-table">
-                    <thead><tr><th>Gambar</th><th>Produk</th><th>Brand</th><th>PK</th><th>Tipe</th><th>Harga</th><th>Aksi</th></tr></thead>
+                    <thead><tr><th>Gambar</th><th>Produk</th><th>Brand</th><th>Spesifikasi</th><th>Pipa & Kabel</th><th>Harga</th><th>Aksi</th></tr></thead>
                     <tbody>${products.map(p => {
                         const images = p.images && p.images.length > 0 ? p.images : (p.imageUrl ? [p.imageUrl] : []);
                         const imageCount = images.length;
+                        const pipeName = p.pipeSize && pricing.pipes[p.pipeSize] ? pricing.pipes[p.pipeSize].name : '-';
+                        const cableName = p.cableSize && pricing.cables[p.cableSize] ? pricing.cables[p.cableSize].name : '-';
                         return `
                         <tr>
                             <td>
@@ -1205,8 +1239,8 @@
                             </td>
                             <td><strong>${p.name}</strong></td>
                             <td><span class="badge badge-primary">${getBrandName(p.brand)}</span></td>
-                            <td>${p.pk} PK</td>
-                            <td>${p.type}</td>
+                            <td><small>${p.pk} PK • ${p.type}</small></td>
+                            <td><small>🔧 ${pipeName}<br>⚡ ${cableName}</small></td>
                             <td>${formatPrice(p.price)}</td>
                             <td>
                                 <div class="action-btns">
@@ -1224,6 +1258,18 @@
             document.getElementById('productModalTitle').textContent = id ? 'Edit Produk' : 'Tambah Produk';
             document.getElementById('productBrand').innerHTML = brands.map(b => `<option value="${b.id}">${b.name}</option>`).join('');
             
+            // Populate pipe size options
+            const pipeSelect = document.getElementById('productPipeSize');
+            pipeSelect.innerHTML = Object.entries(pricing.pipes || {}).map(([key, pipe]) => 
+                `<option value="${key}">${pipe.name}</option>`
+            ).join('');
+            
+            // Populate cable size options
+            const cableSelect = document.getElementById('productCableSize');
+            cableSelect.innerHTML = Object.entries(pricing.cables || {}).map(([key, cable]) => 
+                `<option value="${key}">${cable.name}</option>`
+            ).join('');
+            
             // Reset temp images
             tempProductImages = [null, null, null, null, null];
             existingProductImages = [];
@@ -1239,6 +1285,10 @@
                 document.getElementById('productPrice').value = p.price;
                 document.getElementById('productCategory').value = p.category;
                 document.getElementById('productFeatures').value = (p.features || []).join(', ');
+                
+                // Set pipe and cable sizes
+                if (p.pipeSize) pipeSelect.value = p.pipeSize;
+                if (p.cableSize) cableSelect.value = p.cableSize;
                 
                 // Load existing images
                 if (p.images && p.images.length > 0) {
@@ -1322,6 +1372,8 @@
             const watt = parseInt(document.getElementById('productWatt').value) || 0;
             const price = parseInt(document.getElementById('productPrice').value) || 0;
             const category = document.getElementById('productCategory').value;
+            const pipeSize = document.getElementById('productPipeSize').value;
+            const cableSize = document.getElementById('productCableSize').value;
             const features = document.getElementById('productFeatures').value.split(',').map(f => f.trim()).filter(f => f);
             
             if (!name || !price) { showToast('Nama dan Harga wajib!', 'error'); return; }
@@ -1355,7 +1407,7 @@
                 // For backward compatibility, also set imageUrl to first image
                 const imageUrl = images.length > 0 ? images[0] : '';
                 
-                const productData = { brand, name, pk, type, btu, watt, price, category, features, images, imageUrl, updatedAt: new Date().toISOString() };
+                const productData = { brand, name, pk, type, btu, watt, price, category, pipeSize, cableSize, features, images, imageUrl, updatedAt: new Date().toISOString() };
                 
                 if (id) {
                     await updateDoc(doc(db, COLLECTIONS.products, id), productData);
@@ -1394,16 +1446,28 @@
 
         // ==================== PRICING ====================
         function renderPricingGrid() {
+            // Build pipes HTML
+            let pipesHtml = '';
+            for (const [key, pipe] of Object.entries(pricing.pipes)) {
+                pipesHtml += `<div class="pricing-item"><label>${pipe.name} /m</label><input type="number" id="pricePipe_${key}" value="${pipe.price}"></div>`;
+            }
+            
+            // Build cables HTML
+            let cablesHtml = '';
+            for (const [key, cable] of Object.entries(pricing.cables)) {
+                cablesHtml += `<div class="pricing-item"><label>${cable.name} /m</label><input type="number" id="priceCable_${key}" value="${cable.price}"></div>`;
+            }
+            
             document.getElementById('pricingGrid').innerHTML = `
                 <div class="pricing-card">
-                    <h4>🔧 Pipa AC</h4>
-                    <div class="pricing-item"><label>AC Kecil (≤1PK) /m</label><input type="number" id="pricePS" value="${pricing.pipeSmall}"></div>
-                    <div class="pricing-item"><label>AC Besar (>1PK) /m</label><input type="number" id="pricePL" value="${pricing.pipeLarge}"></div>
+                    <h4>🔧 Pipa AC (per meter)</h4>
+                    ${pipesHtml}
+                    <button class="btn btn-sm" style="margin-top: 10px; padding: 8px 12px; font-size: 12px;" onclick="addPipeSize()">+ Tambah Ukuran</button>
                 </div>
                 <div class="pricing-card">
-                    <h4>⚡ Kabel Listrik</h4>
-                    <div class="pricing-item"><label>AC Kecil (≤1PK) /m</label><input type="number" id="priceCS" value="${pricing.cableSmall}"></div>
-                    <div class="pricing-item"><label>AC Besar (>1PK) /m</label><input type="number" id="priceCL" value="${pricing.cableLarge}"></div>
+                    <h4>⚡ Kabel Listrik (per meter)</h4>
+                    ${cablesHtml}
+                    <button class="btn btn-sm" style="margin-top: 10px; padding: 8px 12px; font-size: 12px;" onclick="addCableSize()">+ Tambah Ukuran</button>
                 </div>
                 <div class="pricing-card">
                     <h4>📦 Material Lain</h4>
@@ -1419,12 +1483,52 @@
             `;
         }
         
+        window.addPipeSize = function() {
+            const name = prompt('Masukkan ukuran pipa (contoh: 1/4 × 3/8):');
+            if (!name) return;
+            const key = name.replace(/[×\s]/g, '-').replace(/"/g, '');
+            const price = parseInt(prompt('Harga per meter:')) || 0;
+            pricing.pipes[key] = { name: name, price: price };
+            renderPricingGrid();
+        }
+        
+        window.addCableSize = function() {
+            const name = prompt('Masukkan ukuran kabel (contoh: 2 × 1,5 mm²):');
+            if (!name) return;
+            const key = name.replace(/[×\s,]/g, '').replace('mm²', '').replace('mm', '');
+            const price = parseInt(prompt('Harga per meter:')) || 0;
+            pricing.cables[key] = { name: name, price: price };
+            renderPricingGrid();
+        }
+        
         window.savePricing = async function() {
+            // Collect pipe prices
+            const newPipes = {};
+            for (const key of Object.keys(pricing.pipes)) {
+                const input = document.getElementById('pricePipe_' + key);
+                if (input) {
+                    newPipes[key] = { 
+                        name: pricing.pipes[key].name, 
+                        price: parseInt(input.value) || 0 
+                    };
+                }
+            }
+            
+            // Collect cable prices
+            const newCables = {};
+            for (const key of Object.keys(pricing.cables)) {
+                const input = document.getElementById('priceCable_' + key);
+                if (input) {
+                    newCables[key] = { 
+                        name: pricing.cables[key].name, 
+                        price: parseInt(input.value) || 0 
+                    };
+                }
+            }
+            
             pricing = {
-                pipeSmall: parseInt(document.getElementById('pricePS').value) || 0,
-                pipeLarge: parseInt(document.getElementById('pricePL').value) || 0,
-                cableSmall: parseInt(document.getElementById('priceCS').value) || 0,
-                cableLarge: parseInt(document.getElementById('priceCL').value) || 0,
+                pipes: newPipes,
+                cables: newCables,
                 ducting: parseInt(document.getElementById('priceD').value) || 0,
                 bracket: parseInt(document.getElementById('priceB').value) || 0,
                 pipePulling: parseInt(document.getElementById('pricePP').value) || 0,
@@ -1605,6 +1709,10 @@
                             <span class="spec-tag">${p.pk} PK</span>
                             <span class="spec-tag">${p.type}</span>
                             ${p.btu ? `<span class="spec-tag">${p.btu.toLocaleString()} BTU</span>` : ''}
+                        </div>
+                        <div class="product-specs" style="margin-top: 4px;">
+                            ${p.pipeSize && pricing.pipes[p.pipeSize] ? `<span class="spec-tag">🔧 ${pricing.pipes[p.pipeSize].name}</span>` : ''}
+                            ${p.cableSize && pricing.cables[p.cableSize] ? `<span class="spec-tag">⚡ ${pricing.cables[p.cableSize].name}</span>` : ''}
                         </div>
                         <div class="product-price">${formatPrice(p.price)}</div>
                         <div class="product-actions">
@@ -1879,18 +1987,25 @@
             if (!product) return;
             currentRABProduct = { ...product };
             
-            const pipePrice = product.category === 'small' ? pricing.pipeSmall : pricing.pipeLarge;
-            const cablePrice = product.category === 'small' ? pricing.cableSmall : pricing.cableLarge;
+            // Get pipe and cable info from product
+            const pipeKey = product.pipeSize || Object.keys(pricing.pipes)[0];
+            const cableKey = product.cableSize || Object.keys(pricing.cables)[0];
+            const pipeInfo = pricing.pipes[pipeKey] || { name: 'N/A', price: 0 };
+            const cableInfo = pricing.cables[cableKey] || { name: 'N/A', price: 0 };
             const installPrice = product.category === 'small' ? pricing.installSmall : pricing.installLarge;
             
             document.getElementById('rabBody').innerHTML = `
                 <div style="background: linear-gradient(135deg, var(--primary), var(--primary-dark)); padding: 20px; border-radius: 16px; text-align: center; margin-bottom: 20px;">
                     <h3 style="font-size: 18px; margin-bottom: 8px;">${getBrandName(product.brand)} - ${product.name} ${product.pk} PK</h3>
                     <div style="font-size: 24px; font-weight: 700;">${formatPrice(product.price)}</div>
+                    <div style="display: flex; justify-content: center; gap: 12px; margin-top: 12px;">
+                        <span style="background: rgba(255,255,255,0.2); padding: 4px 12px; border-radius: 20px; font-size: 12px;">🔧 Pipa: ${pipeInfo.name}</span>
+                        <span style="background: rgba(255,255,255,0.2); padding: 4px 12px; border-radius: 20px; font-size: 12px;">⚡ Kabel: ${cableInfo.name}</span>
+                    </div>
                 </div>
                 <div style="display: grid; gap: 12px; margin-bottom: 20px;">
-                    <div class="form-group" style="margin: 0;"><label class="form-label">Panjang Pipa (m) - ${formatPrice(pipePrice)}/m</label><input type="number" class="form-input" id="rab-pipe" value="5" min="3" max="30" onchange="calculateRAB()"></div>
-                    <div class="form-group" style="margin: 0;"><label class="form-label">Panjang Kabel (m) - ${formatPrice(cablePrice)}/m</label><input type="number" class="form-input" id="rab-cable" value="5" min="3" max="30" onchange="calculateRAB()"></div>
+                    <div class="form-group" style="margin: 0;"><label class="form-label">Panjang Pipa ${pipeInfo.name} - ${formatPrice(pipeInfo.price)}/m</label><input type="number" class="form-input" id="rab-pipe" value="5" min="3" max="30" onchange="calculateRAB()"></div>
+                    <div class="form-group" style="margin: 0;"><label class="form-label">Panjang Kabel ${cableInfo.name} - ${formatPrice(cableInfo.price)}/m</label><input type="number" class="form-input" id="rab-cable" value="5" min="3" max="30" onchange="calculateRAB()"></div>
                     <div class="form-group" style="margin: 0;"><label class="form-label">Ducting (m) - ${formatPrice(pricing.ducting)}/m</label><input type="number" class="form-input" id="rab-ducting" value="0" min="0" onchange="calculateRAB()"></div>
                     <div class="form-group" style="margin: 0;"><label class="form-label">Bracket (set) - ${formatPrice(pricing.bracket)}/set</label><input type="number" class="form-input" id="rab-bracket" value="1" min="0" onchange="calculateRAB()"></div>
                     <div class="form-group" style="margin: 0;"><label class="form-label">Jasa Instalasi - ${formatPrice(installPrice)}</label><select class="form-input" id="rab-install" onchange="calculateRAB()"><option value="yes">Ya</option><option value="no">Tidak</option></select></div>
@@ -1914,8 +2029,13 @@
             const bracketQty = parseInt(document.getElementById('rab-bracket').value) || 0;
             const includeInstall = document.getElementById('rab-install').value === 'yes';
             
-            const pipePrice = p.category === 'small' ? pricing.pipeSmall : pricing.pipeLarge;
-            const cablePrice = p.category === 'small' ? pricing.cableSmall : pricing.cableLarge;
+            // Get pipe and cable prices from product settings
+            const pipeKey = p.pipeSize || Object.keys(pricing.pipes)[0];
+            const cableKey = p.cableSize || Object.keys(pricing.cables)[0];
+            const pipeInfo = pricing.pipes[pipeKey] || { name: 'N/A', price: 0 };
+            const cableInfo = pricing.cables[cableKey] || { name: 'N/A', price: 0 };
+            const pipePrice = pipeInfo.price;
+            const cablePrice = cableInfo.price;
             const installPrice = p.category === 'small' ? pricing.installSmall : pricing.installLarge;
             
             const pipeCost = pipePrice * pipeLength;
@@ -1927,12 +2047,13 @@
             const materialTotal = pipeCost + cableCost + ductingCost + bracketCost + pipePullingCost;
             const grandTotal = p.price + materialTotal + installCost;
             
-            currentRABProduct.rabCalc = { pipeLength, cableLength, ductingLength, bracketQty, pipeCost, cableCost, ductingCost, bracketCost, installCost, pipePullingCost, materialTotal, grandTotal };
+            currentRABProduct.rabCalc = { pipeLength, cableLength, ductingLength, bracketQty, pipeCost, cableCost, ductingCost, bracketCost, installCost, pipePullingCost, materialTotal, grandTotal, pipeName: pipeInfo.name, cableName: cableInfo.name };
             
             document.getElementById('rabResults').innerHTML = `
                 <div style="display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid rgba(255,255,255,0.05);"><span>Unit AC</span><span style="color: var(--success);">${formatPrice(p.price)}</span></div>
-                <div style="display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid rgba(255,255,255,0.05);"><span>Pipa (${pipeLength}m)</span><span>${formatPrice(pipeCost)}</span></div>
-                <div style="display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid rgba(255,255,255,0.05);"><span>Kabel (${cableLength}m)</span><span>${formatPrice(cableCost)}</span></div>
+                <div style="display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid rgba(255,255,255,0.05);"><span>Pipa ${pipeInfo.name} (${pipeLength}m)</span><span>${formatPrice(pipeCost)}</span></div>
+                <div style="display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid rgba(255,255,255,0.05);"><span>Kabel ${cableInfo.name} (${cableLength}m)</span><span>${formatPrice(cableCost)}</span></div>
+                ${pipePullingCost > 0 ? `<div style="display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid rgba(255,255,255,0.05);"><span>Tarik Pipa (${pipeLength - 5}m)</span><span>${formatPrice(pipePullingCost)}</span></div>` : ''}
                 ${ductingLength > 0 ? `<div style="display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid rgba(255,255,255,0.05);"><span>Ducting</span><span>${formatPrice(ductingCost)}</span></div>` : ''}
                 ${bracketQty > 0 ? `<div style="display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid rgba(255,255,255,0.05);"><span>Bracket</span><span>${formatPrice(bracketCost)}</span></div>` : ''}
                 ${includeInstall ? `<div style="display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid rgba(255,255,255,0.05);"><span>Instalasi</span><span>${formatPrice(installCost)}</span></div>` : ''}
