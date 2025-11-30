@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://www.gstatic.com https://*.googleapis.com https://*.firebaseio.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob: https://*.googleapis.com https://*.googleusercontent.com https://firebasestorage.googleapis.com; connect-src 'self' https://*.googleapis.com https://*.google.com https://*.firebaseio.com https://*.cloudfunctions.net wss://*.firebaseio.com;">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://www.gstatic.com https://*.gstatic.com https://*.googleapis.com https://*.firebaseio.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob: https://*.googleapis.com https://*.googleusercontent.com https://firebasestorage.googleapis.com https://*.firebasestorage.app; connect-src 'self' https://*.gstatic.com https://*.googleapis.com https://*.google.com https://*.firebaseio.com https://*.cloudfunctions.net https://*.firebasestorage.app https://firebasestorage.googleapis.com wss://*.firebaseio.com;">
     <title>Nala Aircon - Marketplace AC Multi Brand</title>
     
     <!-- Preconnect to Firebase for faster loading -->
@@ -131,6 +131,8 @@
         .pricing-item label { font-size: 13px; color: var(--gray-300); }
         .pricing-item input { width: 120px; padding: 8px 12px; background: var(--dark-card); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 8px; color: white; font-size: 13px; text-align: right; }
         .pricing-item input:focus { border-color: var(--primary); outline: none; }
+        .pricing-delete { background: var(--danger); color: white; border: none; width: 28px; height: 28px; border-radius: 6px; cursor: pointer; font-size: 16px; display: flex; align-items: center; justify-content: center; opacity: 0.7; transition: all 0.2s; flex-shrink: 0; }
+        .pricing-delete:hover { opacity: 1; transform: scale(1.1); }
         
         /* Upload Box */
         .upload-box { background: var(--dark-hover); border: 2px dashed rgba(255, 255, 255, 0.2); border-radius: 16px; padding: 24px; text-align: center; cursor: pointer; transition: all 0.3s ease; min-height: 150px; display: flex; flex-direction: column; align-items: center; justify-content: center; position: relative; }
@@ -771,6 +773,12 @@
                     </div>
                 </div>
                 <div class="form-group">
+                    <label class="form-label">👷 Jasa Instalasi</label>
+                    <select class="form-input" id="productInstallService">
+                        <!-- Options will be populated dynamically -->
+                    </select>
+                </div>
+                <div class="form-group">
                     <label class="form-label">Fitur (pisahkan dengan koma)</label>
                     <input type="text" class="form-input" id="productFeatures" placeholder="Inverter, Low Watt, WiFi">
                 </div>
@@ -887,10 +895,20 @@
             // Material lain
             ducting: 12500,
             bracket: 75000,
-            pipePulling: 25000,
-            // Jasa instalasi
-            installSmall: 350000,
-            installLarge: 450000
+            // Jasa
+            services: {
+                'bobok': { name: 'Pembobokan Dinding', price: 150000, unit: '/titik' },
+                'tarik-pipa': { name: 'Penarikan Pipa', price: 25000, unit: '/meter' },
+                'install-split-05-1': { name: 'Instalasi Split ½-1 PK', price: 350000, unit: '/unit' },
+                'install-split-1.5-2': { name: 'Instalasi Split 1½-2 PK', price: 450000, unit: '/unit' },
+                'install-cassette-2': { name: 'Instalasi Cassette 2 PK', price: 850000, unit: '/unit' },
+                'install-cassette-3': { name: 'Instalasi Cassette 3 PK', price: 1000000, unit: '/unit' },
+                'install-cassette-4': { name: 'Instalasi Cassette 4 PK', price: 1200000, unit: '/unit' },
+                'install-cassette-5': { name: 'Instalasi Cassette 5 PK', price: 1500000, unit: '/unit' },
+                'install-standing-2': { name: 'Instalasi Standing 2 PK', price: 750000, unit: '/unit' },
+                'install-standing-3': { name: 'Instalasi Standing 3 PK', price: 900000, unit: '/unit' },
+                'install-standing-5': { name: 'Instalasi Standing 5 PK', price: 1200000, unit: '/unit' }
+            }
         };
         let settings = {
             storeName: 'Nala Aircon',
@@ -1270,6 +1288,13 @@
                 `<option value="${key}">${cable.name}</option>`
             ).join('');
             
+            // Populate install service options
+            const installSelect = document.getElementById('productInstallService');
+            const installServices = Object.entries(pricing.services || {}).filter(([key]) => key.startsWith('install'));
+            installSelect.innerHTML = installServices.map(([key, svc]) => 
+                `<option value="${key}">${svc.name} - ${formatPrice(svc.price)}</option>`
+            ).join('');
+            
             // Reset temp images
             tempProductImages = [null, null, null, null, null];
             existingProductImages = [];
@@ -1286,9 +1311,10 @@
                 document.getElementById('productCategory').value = p.category;
                 document.getElementById('productFeatures').value = (p.features || []).join(', ');
                 
-                // Set pipe and cable sizes
+                // Set pipe, cable, and install service
                 if (p.pipeSize) pipeSelect.value = p.pipeSize;
                 if (p.cableSize) cableSelect.value = p.cableSize;
+                if (p.installService) installSelect.value = p.installService;
                 
                 // Load existing images
                 if (p.images && p.images.length > 0) {
@@ -1374,6 +1400,7 @@
             const category = document.getElementById('productCategory').value;
             const pipeSize = document.getElementById('productPipeSize').value;
             const cableSize = document.getElementById('productCableSize').value;
+            const installService = document.getElementById('productInstallService').value;
             const features = document.getElementById('productFeatures').value.split(',').map(f => f.trim()).filter(f => f);
             
             if (!name || !price) { showToast('Nama dan Harga wajib!', 'error'); return; }
@@ -1407,7 +1434,7 @@
                 // For backward compatibility, also set imageUrl to first image
                 const imageUrl = images.length > 0 ? images[0] : '';
                 
-                const productData = { brand, name, pk, type, btu, watt, price, category, pipeSize, cableSize, features, images, imageUrl, updatedAt: new Date().toISOString() };
+                const productData = { brand, name, pk, type, btu, watt, price, category, pipeSize, cableSize, installService, features, images, imageUrl, updatedAt: new Date().toISOString() };
                 
                 if (id) {
                     await updateDoc(doc(db, COLLECTIONS.products, id), productData);
@@ -1448,14 +1475,33 @@
         function renderPricingGrid() {
             // Build pipes HTML
             let pipesHtml = '';
-            for (const [key, pipe] of Object.entries(pricing.pipes)) {
-                pipesHtml += `<div class="pricing-item"><label>${pipe.name} /m</label><input type="number" id="pricePipe_${key}" value="${pipe.price}"></div>`;
+            for (const [key, pipe] of Object.entries(pricing.pipes || {})) {
+                pipesHtml += `<div class="pricing-item"><label>${pipe.name} /m</label><input type="number" id="pricePipe_${key}" value="${pipe.price}" data-key="${key}"><button class="pricing-delete" onclick="deletePipe('${key}')">×</button></div>`;
             }
             
             // Build cables HTML
             let cablesHtml = '';
-            for (const [key, cable] of Object.entries(pricing.cables)) {
-                cablesHtml += `<div class="pricing-item"><label>${cable.name} /m</label><input type="number" id="priceCable_${key}" value="${cable.price}"></div>`;
+            for (const [key, cable] of Object.entries(pricing.cables || {})) {
+                cablesHtml += `<div class="pricing-item"><label>${cable.name} /m</label><input type="number" id="priceCable_${key}" value="${cable.price}" data-key="${key}"><button class="pricing-delete" onclick="deleteCable('${key}')">×</button></div>`;
+            }
+            
+            // Build services HTML - grouped
+            let servicesHtml = '';
+            const serviceGroups = {
+                'Jasa Umum': ['bobok', 'tarik-pipa'],
+                'Instalasi Split': ['install-split-05-1', 'install-split-1.5-2'],
+                'Instalasi Cassette': ['install-cassette-2', 'install-cassette-3', 'install-cassette-4', 'install-cassette-5'],
+                'Instalasi Standing': ['install-standing-2', 'install-standing-3', 'install-standing-5']
+            };
+            
+            for (const [groupName, keys] of Object.entries(serviceGroups)) {
+                servicesHtml += `<div style="margin-top: 12px; font-weight: 600; color: var(--primary); font-size: 13px;">${groupName}</div>`;
+                for (const key of keys) {
+                    const svc = pricing.services[key];
+                    if (svc) {
+                        servicesHtml += `<div class="pricing-item"><label>${svc.name} ${svc.unit}</label><input type="number" id="priceService_${key}" value="${svc.price}" data-key="${key}"></div>`;
+                    }
+                }
             }
             
             document.getElementById('pricingGrid').innerHTML = `
@@ -1473,14 +1519,30 @@
                     <h4>📦 Material Lain</h4>
                     <div class="pricing-item"><label>Ducting /m</label><input type="number" id="priceD" value="${pricing.ducting}"></div>
                     <div class="pricing-item"><label>Bracket /set</label><input type="number" id="priceB" value="${pricing.bracket}"></div>
-                    <div class="pricing-item"><label>Tarik Pipa /m</label><input type="number" id="pricePP" value="${pricing.pipePulling}"></div>
                 </div>
-                <div class="pricing-card">
-                    <h4>👷 Jasa Instalasi</h4>
-                    <div class="pricing-item"><label>AC Kecil (≤1PK)</label><input type="number" id="priceIS" value="${pricing.installSmall}"></div>
-                    <div class="pricing-item"><label>AC Besar (>1PK)</label><input type="number" id="priceIL" value="${pricing.installLarge}"></div>
+                <div class="pricing-card" style="grid-column: span 2;">
+                    <h4>👷 Jasa Instalasi & Pekerjaan</h4>
+                    <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px;">
+                        <div>${servicesHtml.split('Instalasi Cassette')[0]}</div>
+                        <div>${'Instalasi Cassette' + (servicesHtml.split('Instalasi Cassette')[1] || '')}</div>
+                    </div>
+                    <button class="btn btn-sm" style="margin-top: 15px; padding: 8px 12px; font-size: 12px;" onclick="addService()">+ Tambah Jasa</button>
                 </div>
             `;
+        }
+        
+        window.deletePipe = function(key) {
+            if (confirm('Hapus ukuran pipa ini?')) {
+                delete pricing.pipes[key];
+                renderPricingGrid();
+            }
+        }
+        
+        window.deleteCable = function(key) {
+            if (confirm('Hapus ukuran kabel ini?')) {
+                delete pricing.cables[key];
+                renderPricingGrid();
+            }
         }
         
         window.addPipeSize = function() {
@@ -1501,10 +1563,20 @@
             renderPricingGrid();
         }
         
+        window.addService = function() {
+            const name = prompt('Nama jasa (contoh: Instalasi Split 3 PK):');
+            if (!name) return;
+            const unit = prompt('Satuan (contoh: /unit, /titik, /meter):', '/unit') || '/unit';
+            const price = parseInt(prompt('Harga:')) || 0;
+            const key = name.toLowerCase().replace(/\s+/g, '-').replace(/[½]/g, '05');
+            pricing.services[key] = { name: name, price: price, unit: unit };
+            renderPricingGrid();
+        }
+        
         window.savePricing = async function() {
             // Collect pipe prices
             const newPipes = {};
-            for (const key of Object.keys(pricing.pipes)) {
+            for (const key of Object.keys(pricing.pipes || {})) {
                 const input = document.getElementById('pricePipe_' + key);
                 if (input) {
                     newPipes[key] = { 
@@ -1516,7 +1588,7 @@
             
             // Collect cable prices
             const newCables = {};
-            for (const key of Object.keys(pricing.cables)) {
+            for (const key of Object.keys(pricing.cables || {})) {
                 const input = document.getElementById('priceCable_' + key);
                 if (input) {
                     newCables[key] = { 
@@ -1526,14 +1598,25 @@
                 }
             }
             
+            // Collect service prices
+            const newServices = {};
+            for (const key of Object.keys(pricing.services || {})) {
+                const input = document.getElementById('priceService_' + key);
+                if (input) {
+                    newServices[key] = { 
+                        name: pricing.services[key].name, 
+                        price: parseInt(input.value) || 0,
+                        unit: pricing.services[key].unit
+                    };
+                }
+            }
+            
             pricing = {
                 pipes: newPipes,
                 cables: newCables,
+                services: newServices,
                 ducting: parseInt(document.getElementById('priceD').value) || 0,
-                bracket: parseInt(document.getElementById('priceB').value) || 0,
-                pipePulling: parseInt(document.getElementById('pricePP').value) || 0,
-                installSmall: parseInt(document.getElementById('priceIS').value) || 0,
-                installLarge: parseInt(document.getElementById('priceIL').value) || 0
+                bracket: parseInt(document.getElementById('priceB').value) || 0
             };
             try {
                 await setDoc(doc(db, COLLECTIONS.pricing, 'config'), pricing);
@@ -1988,28 +2071,44 @@
             currentRABProduct = { ...product };
             
             // Get pipe and cable info from product
-            const pipeKey = product.pipeSize || Object.keys(pricing.pipes)[0];
-            const cableKey = product.cableSize || Object.keys(pricing.cables)[0];
-            const pipeInfo = pricing.pipes[pipeKey] || { name: 'N/A', price: 0 };
-            const cableInfo = pricing.cables[cableKey] || { name: 'N/A', price: 0 };
-            const installPrice = product.category === 'small' ? pricing.installSmall : pricing.installLarge;
+            const pipeKey = product.pipeSize || Object.keys(pricing.pipes || {})[0];
+            const cableKey = product.cableSize || Object.keys(pricing.cables || {})[0];
+            const pipeInfo = (pricing.pipes || {})[pipeKey] || { name: 'N/A', price: 0 };
+            const cableInfo = (pricing.cables || {})[cableKey] || { name: 'N/A', price: 0 };
+            
+            // Get install service info
+            const installKey = product.installService || 'install-split-05-1';
+            const installInfo = (pricing.services || {})[installKey] || { name: 'Instalasi', price: 350000 };
+            
+            // Get other services
+            const bobokInfo = (pricing.services || {})['bobok'] || { name: 'Pembobokan', price: 150000 };
+            const tarikPipaInfo = (pricing.services || {})['tarik-pipa'] || { name: 'Tarik Pipa', price: 25000 };
             
             document.getElementById('rabBody').innerHTML = `
                 <div style="background: linear-gradient(135deg, var(--primary), var(--primary-dark)); padding: 20px; border-radius: 16px; text-align: center; margin-bottom: 20px;">
                     <h3 style="font-size: 18px; margin-bottom: 8px;">${getBrandName(product.brand)} - ${product.name} ${product.pk} PK</h3>
                     <div style="font-size: 24px; font-weight: 700;">${formatPrice(product.price)}</div>
-                    <div style="display: flex; justify-content: center; gap: 12px; margin-top: 12px;">
-                        <span style="background: rgba(255,255,255,0.2); padding: 4px 12px; border-radius: 20px; font-size: 12px;">🔧 Pipa: ${pipeInfo.name}</span>
-                        <span style="background: rgba(255,255,255,0.2); padding: 4px 12px; border-radius: 20px; font-size: 12px;">⚡ Kabel: ${cableInfo.name}</span>
+                    <div style="display: flex; justify-content: center; gap: 12px; margin-top: 12px; flex-wrap: wrap;">
+                        <span style="background: rgba(255,255,255,0.2); padding: 4px 12px; border-radius: 20px; font-size: 12px;">🔧 ${pipeInfo.name}</span>
+                        <span style="background: rgba(255,255,255,0.2); padding: 4px 12px; border-radius: 20px; font-size: 12px;">⚡ ${cableInfo.name}</span>
                     </div>
                 </div>
+                
+                <h4 style="margin-bottom: 12px; color: var(--primary);">📦 Material</h4>
                 <div style="display: grid; gap: 12px; margin-bottom: 20px;">
-                    <div class="form-group" style="margin: 0;"><label class="form-label">Panjang Pipa ${pipeInfo.name} - ${formatPrice(pipeInfo.price)}/m</label><input type="number" class="form-input" id="rab-pipe" value="5" min="3" max="30" onchange="calculateRAB()"></div>
-                    <div class="form-group" style="margin: 0;"><label class="form-label">Panjang Kabel ${cableInfo.name} - ${formatPrice(cableInfo.price)}/m</label><input type="number" class="form-input" id="rab-cable" value="5" min="3" max="30" onchange="calculateRAB()"></div>
+                    <div class="form-group" style="margin: 0;"><label class="form-label">Panjang Pipa ${pipeInfo.name} - ${formatPrice(pipeInfo.price)}/m</label><input type="number" class="form-input" id="rab-pipe" value="5" min="0" max="50" onchange="calculateRAB()"></div>
+                    <div class="form-group" style="margin: 0;"><label class="form-label">Panjang Kabel ${cableInfo.name} - ${formatPrice(cableInfo.price)}/m</label><input type="number" class="form-input" id="rab-cable" value="5" min="0" max="50" onchange="calculateRAB()"></div>
                     <div class="form-group" style="margin: 0;"><label class="form-label">Ducting (m) - ${formatPrice(pricing.ducting)}/m</label><input type="number" class="form-input" id="rab-ducting" value="0" min="0" onchange="calculateRAB()"></div>
                     <div class="form-group" style="margin: 0;"><label class="form-label">Bracket (set) - ${formatPrice(pricing.bracket)}/set</label><input type="number" class="form-input" id="rab-bracket" value="1" min="0" onchange="calculateRAB()"></div>
-                    <div class="form-group" style="margin: 0;"><label class="form-label">Jasa Instalasi - ${formatPrice(installPrice)}</label><select class="form-input" id="rab-install" onchange="calculateRAB()"><option value="yes">Ya</option><option value="no">Tidak</option></select></div>
                 </div>
+                
+                <h4 style="margin-bottom: 12px; color: var(--secondary);">👷 Jasa</h4>
+                <div style="display: grid; gap: 12px; margin-bottom: 20px;">
+                    <div class="form-group" style="margin: 0;"><label class="form-label">${installInfo.name} - ${formatPrice(installInfo.price)}</label><select class="form-input" id="rab-install" onchange="calculateRAB()"><option value="yes">Ya</option><option value="no">Tidak</option></select></div>
+                    <div class="form-group" style="margin: 0;"><label class="form-label">${bobokInfo.name} - ${formatPrice(bobokInfo.price)}/titik</label><input type="number" class="form-input" id="rab-bobok" value="0" min="0" max="10" onchange="calculateRAB()"></div>
+                    <div class="form-group" style="margin: 0;"><label class="form-label">${tarikPipaInfo.name} - ${formatPrice(tarikPipaInfo.price)}/m (jika pipa > 5m)</label><input type="number" class="form-input" id="rab-tarik" value="0" min="0" max="50" onchange="calculateRAB()" placeholder="Otomatis jika pipa > 5m"></div>
+                </div>
+                
                 <div id="rabResults" style="background: var(--dark-card); border-radius: 16px; padding: 16px;"></div>
             `;
             document.getElementById('rabFooter').innerHTML = `
@@ -2028,35 +2127,58 @@
             const ductingLength = parseInt(document.getElementById('rab-ducting').value) || 0;
             const bracketQty = parseInt(document.getElementById('rab-bracket').value) || 0;
             const includeInstall = document.getElementById('rab-install').value === 'yes';
+            const bobokQty = parseInt(document.getElementById('rab-bobok').value) || 0;
+            let tarikLength = parseInt(document.getElementById('rab-tarik').value) || 0;
             
-            // Get pipe and cable prices from product settings
-            const pipeKey = p.pipeSize || Object.keys(pricing.pipes)[0];
-            const cableKey = p.cableSize || Object.keys(pricing.cables)[0];
-            const pipeInfo = pricing.pipes[pipeKey] || { name: 'N/A', price: 0 };
-            const cableInfo = pricing.cables[cableKey] || { name: 'N/A', price: 0 };
-            const pipePrice = pipeInfo.price;
-            const cablePrice = cableInfo.price;
-            const installPrice = p.category === 'small' ? pricing.installSmall : pricing.installLarge;
+            // Auto calculate tarik pipa if pipe > 5m and tarik field is 0
+            if (pipeLength > 5 && tarikLength === 0) {
+                tarikLength = pipeLength - 5;
+                document.getElementById('rab-tarik').value = tarikLength;
+            }
             
-            const pipeCost = pipePrice * pipeLength;
-            const cableCost = cablePrice * cableLength;
+            // Get prices from product settings
+            const pipeKey = p.pipeSize || Object.keys(pricing.pipes || {})[0];
+            const cableKey = p.cableSize || Object.keys(pricing.cables || {})[0];
+            const pipeInfo = (pricing.pipes || {})[pipeKey] || { name: 'N/A', price: 0 };
+            const cableInfo = (pricing.cables || {})[cableKey] || { name: 'N/A', price: 0 };
+            
+            const installKey = p.installService || 'install-split-05-1';
+            const installInfo = (pricing.services || {})[installKey] || { name: 'Instalasi', price: 350000 };
+            const bobokInfo = (pricing.services || {})['bobok'] || { price: 150000 };
+            const tarikPipaInfo = (pricing.services || {})['tarik-pipa'] || { price: 25000 };
+            
+            const pipeCost = pipeInfo.price * pipeLength;
+            const cableCost = cableInfo.price * cableLength;
             const ductingCost = pricing.ducting * ductingLength;
             const bracketCost = pricing.bracket * bracketQty;
-            const installCost = includeInstall ? installPrice : 0;
-            const pipePullingCost = pipeLength > 5 ? (pipeLength - 5) * pricing.pipePulling : 0;
-            const materialTotal = pipeCost + cableCost + ductingCost + bracketCost + pipePullingCost;
-            const grandTotal = p.price + materialTotal + installCost;
+            const installCost = includeInstall ? installInfo.price : 0;
+            const bobokCost = bobokInfo.price * bobokQty;
+            const tarikCost = tarikPipaInfo.price * tarikLength;
             
-            currentRABProduct.rabCalc = { pipeLength, cableLength, ductingLength, bracketQty, pipeCost, cableCost, ductingCost, bracketCost, installCost, pipePullingCost, materialTotal, grandTotal, pipeName: pipeInfo.name, cableName: cableInfo.name };
+            const materialTotal = pipeCost + cableCost + ductingCost + bracketCost;
+            const serviceTotal = installCost + bobokCost + tarikCost;
+            const grandTotal = p.price + materialTotal + serviceTotal;
+            
+            currentRABProduct.rabCalc = { 
+                pipeLength, cableLength, ductingLength, bracketQty, bobokQty, tarikLength,
+                pipeCost, cableCost, ductingCost, bracketCost, installCost, bobokCost, tarikCost,
+                materialTotal, serviceTotal, grandTotal, 
+                pipeName: pipeInfo.name, cableName: cableInfo.name, installName: installInfo.name
+            };
             
             document.getElementById('rabResults').innerHTML = `
+                <div style="font-weight: 600; margin-bottom: 8px; color: var(--primary);">📦 Unit & Material</div>
                 <div style="display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid rgba(255,255,255,0.05);"><span>Unit AC</span><span style="color: var(--success);">${formatPrice(p.price)}</span></div>
-                <div style="display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid rgba(255,255,255,0.05);"><span>Pipa ${pipeInfo.name} (${pipeLength}m)</span><span>${formatPrice(pipeCost)}</span></div>
-                <div style="display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid rgba(255,255,255,0.05);"><span>Kabel ${cableInfo.name} (${cableLength}m)</span><span>${formatPrice(cableCost)}</span></div>
-                ${pipePullingCost > 0 ? `<div style="display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid rgba(255,255,255,0.05);"><span>Tarik Pipa (${pipeLength - 5}m)</span><span>${formatPrice(pipePullingCost)}</span></div>` : ''}
-                ${ductingLength > 0 ? `<div style="display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid rgba(255,255,255,0.05);"><span>Ducting</span><span>${formatPrice(ductingCost)}</span></div>` : ''}
-                ${bracketQty > 0 ? `<div style="display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid rgba(255,255,255,0.05);"><span>Bracket</span><span>${formatPrice(bracketCost)}</span></div>` : ''}
-                ${includeInstall ? `<div style="display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid rgba(255,255,255,0.05);"><span>Instalasi</span><span>${formatPrice(installCost)}</span></div>` : ''}
+                ${pipeLength > 0 ? `<div style="display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid rgba(255,255,255,0.05);"><span>Pipa ${pipeInfo.name} (${pipeLength}m)</span><span>${formatPrice(pipeCost)}</span></div>` : ''}
+                ${cableLength > 0 ? `<div style="display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid rgba(255,255,255,0.05);"><span>Kabel ${cableInfo.name} (${cableLength}m)</span><span>${formatPrice(cableCost)}</span></div>` : ''}
+                ${ductingLength > 0 ? `<div style="display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid rgba(255,255,255,0.05);"><span>Ducting (${ductingLength}m)</span><span>${formatPrice(ductingCost)}</span></div>` : ''}
+                ${bracketQty > 0 ? `<div style="display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid rgba(255,255,255,0.05);"><span>Bracket (${bracketQty} set)</span><span>${formatPrice(bracketCost)}</span></div>` : ''}
+                
+                ${(includeInstall || bobokQty > 0 || tarikLength > 0) ? `<div style="font-weight: 600; margin: 12px 0 8px; color: var(--secondary);">👷 Jasa</div>` : ''}
+                ${includeInstall ? `<div style="display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid rgba(255,255,255,0.05);"><span>${installInfo.name}</span><span>${formatPrice(installCost)}</span></div>` : ''}
+                ${bobokQty > 0 ? `<div style="display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid rgba(255,255,255,0.05);"><span>Pembobokan (${bobokQty} titik)</span><span>${formatPrice(bobokCost)}</span></div>` : ''}
+                ${tarikLength > 0 ? `<div style="display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid rgba(255,255,255,0.05);"><span>Tarik Pipa (${tarikLength}m)</span><span>${formatPrice(tarikCost)}</span></div>` : ''}
+                
                 <div style="display: flex; justify-content: space-between; padding: 12px 0; margin-top: 8px; border-top: 2px solid var(--primary); font-size: 18px; font-weight: 700;"><span>TOTAL</span><span style="color: var(--secondary);">${formatPrice(grandTotal)}</span></div>
             `;
         }
