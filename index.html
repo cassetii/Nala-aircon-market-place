@@ -213,6 +213,24 @@
         
         .nav-tabs { display: flex; gap: 8px; padding: 16px; max-width: 1400px; margin: 0 auto; overflow-x: auto; scrollbar-width: none; }
         .nav-tabs::-webkit-scrollbar { display: none; }
+        
+        /* Filter Bar */
+        .filter-bar { background: var(--dark-card); border-bottom: 1px solid rgba(255,255,255,0.05); padding: 12px 16px; }
+        .filter-container { display: flex; gap: 12px; max-width: 1400px; margin: 0 auto; flex-wrap: wrap; align-items: center; }
+        .filter-group { display: flex; align-items: center; gap: 6px; }
+        .filter-group label { font-size: 12px; color: var(--gray-400); white-space: nowrap; }
+        .filter-group select { background: var(--dark-hover); border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; padding: 8px 12px; color: white; font-size: 13px; cursor: pointer; min-width: 120px; }
+        .filter-group select:focus { border-color: var(--primary); outline: none; }
+        .filter-reset { background: transparent; border: 1px solid var(--gray-500); color: var(--gray-400); padding: 8px 14px; border-radius: 8px; font-size: 12px; cursor: pointer; transition: all 0.2s; }
+        .filter-reset:hover { border-color: var(--primary); color: var(--primary); }
+        .active-filters { display: flex; gap: 8px; margin-top: 10px; max-width: 1400px; margin-left: auto; margin-right: auto; flex-wrap: wrap; }
+        .active-filter-tag { background: var(--primary); color: white; padding: 4px 10px; border-radius: 20px; font-size: 11px; display: flex; align-items: center; gap: 6px; }
+        .active-filter-tag button { background: none; border: none; color: white; cursor: pointer; font-size: 14px; padding: 0; line-height: 1; }
+        @media (max-width: 768px) { 
+            .filter-container { gap: 8px; }
+            .filter-group { flex: 1 1 45%; }
+            .filter-group select { width: 100%; min-width: auto; }
+        }
         .nav-tab { padding: 10px 20px; background: var(--dark-card); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 25px; color: var(--gray-400); font-size: 13px; font-weight: 600; cursor: pointer; white-space: nowrap; transition: all 0.3s ease; display: flex; align-items: center; gap: 8px; }
         .nav-tab:hover { background: var(--dark-hover); color: white; }
         .nav-tab.active { background: linear-gradient(135deg, var(--primary), var(--primary-dark)); border-color: transparent; color: white; }
@@ -235,9 +253,34 @@
         .product-card { background: var(--dark-card); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 20px; overflow: hidden; transition: all 0.3s ease; cursor: pointer; }
         .product-card:hover { transform: translateY(-4px); border-color: rgba(0, 169, 224, 0.3); box-shadow: 0 0 40px rgba(0, 169, 224, 0.15); }
         .product-image { position: relative; height: 180px; background: linear-gradient(135deg, #1a2744, #0d1829); display: flex; align-items: center; justify-content: center; overflow: hidden; cursor: zoom-in; }
-        .product-image::after { content: '🔍'; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%) scale(0); background: rgba(0,0,0,0.6); width: 50px; height: 50px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 24px; transition: transform 0.3s ease; opacity: 0; }
+        .product-image::after { content: '🔍'; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%) scale(0); background: rgba(0,0,0,0.6); width: 50px; height: 50px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 24px; transition: transform 0.3s ease; opacity: 0; pointer-events: none; }
         .product-image:hover::after { transform: translate(-50%, -50%) scale(1); opacity: 1; }
         .product-image img { width: 100%; height: 100%; object-fit: cover; }
+        
+        /* Wishlist Button */
+        .wishlist-btn { position: absolute; top: 10px; right: 10px; background: rgba(0,0,0,0.5); border: none; width: 36px; height: 36px; border-radius: 50%; cursor: pointer; font-size: 18px; display: flex; align-items: center; justify-content: center; transition: all 0.3s; z-index: 5; }
+        .wishlist-btn:hover { background: rgba(255,255,255,0.2); transform: scale(1.1); }
+        
+        /* Compare Button */
+        .btn-outline-primary { background: transparent; border: 1px solid var(--primary); color: var(--primary); }
+        .btn-outline-primary:hover { background: var(--primary); color: white; }
+        .compare-btn { padding: 10px 12px !important; min-width: auto !important; }
+        
+        /* Compare Bar */
+        .compare-bar { position: fixed; bottom: 0; left: 0; right: 0; background: var(--dark-card); border-top: 1px solid rgba(255,255,255,0.1); padding: 12px 20px; z-index: 500; transform: translateY(100%); transition: transform 0.3s ease; }
+        .compare-bar.show { transform: translateY(0); }
+        .compare-content { max-width: 1200px; margin: 0 auto; display: flex; align-items: center; justify-content: space-between; gap: 16px; }
+        .compare-items { display: flex; gap: 12px; flex: 1; overflow-x: auto; }
+        .compare-item { display: flex; align-items: center; gap: 8px; background: var(--dark-hover); padding: 8px 12px; border-radius: 8px; }
+        .compare-item img { width: 40px; height: 30px; object-fit: cover; border-radius: 4px; }
+        .compare-item span { font-size: 13px; white-space: nowrap; }
+        .compare-item button { background: none; border: none; color: var(--gray-400); cursor: pointer; font-size: 16px; }
+        
+        /* Compare Table */
+        .compare-table { width: 100%; border-collapse: collapse; }
+        .compare-table th, .compare-table td { padding: 12px; text-align: left; border-bottom: 1px solid rgba(255,255,255,0.05); }
+        .compare-table th { background: var(--dark-hover); color: var(--gray-400); font-size: 13px; width: 120px; }
+        .compare-table td { background: var(--dark-card); }
         .product-image-placeholder { width: 100%; height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; background: linear-gradient(135deg, rgba(0, 169, 224, 0.1), rgba(0, 212, 170, 0.05)); }
         .product-image-placeholder .ac-icon { font-size: 64px; margin-bottom: 8px; }
         .product-image-placeholder span { font-size: 11px; color: var(--gray-500); }
@@ -253,6 +296,7 @@
         .product-price { font-family: 'Space Grotesk', sans-serif; font-size: 20px; font-weight: 700; color: var(--secondary); }
         .product-actions { display: flex; gap: 8px; }
         .product-actions .btn { flex: 1; padding: 12px 16px; font-size: 13px; }
+        .product-actions .compare-btn { flex: 0 0 44px; padding: 12px !important; }
         
         /* Cart Sidebar */
         .cart-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.7); backdrop-filter: blur(5px); z-index: 200; opacity: 0; visibility: hidden; transition: all 0.3s ease; }
@@ -591,6 +635,72 @@
         </header>
         
         <nav class="nav-tabs" id="brandTabs"></nav>
+        
+        <!-- Filter Bar -->
+        <div class="filter-bar" id="filterBar">
+            <div class="filter-container">
+                <div class="filter-group">
+                    <label>PK:</label>
+                    <select id="filterPK" onchange="applyFilters()">
+                        <option value="">Semua PK</option>
+                        <option value="0.5">½ PK</option>
+                        <option value="0.75">¾ PK</option>
+                        <option value="1">1 PK</option>
+                        <option value="1.5">1½ PK</option>
+                        <option value="2">2 PK</option>
+                        <option value="2.5">2½ PK</option>
+                        <option value="3">3 PK</option>
+                        <option value="4">4 PK</option>
+                        <option value="5">5 PK</option>
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <label>Tipe:</label>
+                    <select id="filterType" onchange="applyFilters()">
+                        <option value="">Semua Tipe</option>
+                        <option value="Split Wall">Split Wall</option>
+                        <option value="Cassette">Cassette</option>
+                        <option value="Standing">Standing Floor</option>
+                        <option value="Ceiling">Ceiling</option>
+                        <option value="Duct">Ducted</option>
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <label>Harga:</label>
+                    <select id="filterPrice" onchange="applyFilters()">
+                        <option value="">Semua Harga</option>
+                        <option value="0-5000000">< Rp 5 Juta</option>
+                        <option value="5000000-10000000">Rp 5 - 10 Juta</option>
+                        <option value="10000000-20000000">Rp 10 - 20 Juta</option>
+                        <option value="20000000-50000000">Rp 20 - 50 Juta</option>
+                        <option value="50000000-999999999">> Rp 50 Juta</option>
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <label>Fitur:</label>
+                    <select id="filterFeature" onchange="applyFilters()">
+                        <option value="">Semua Fitur</option>
+                        <option value="Inverter">Inverter</option>
+                        <option value="Low Watt">Low Watt</option>
+                        <option value="WiFi">WiFi Control</option>
+                        <option value="Ion">Ion/Plasma</option>
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <label>Urutkan:</label>
+                    <select id="sortBy" onchange="applyFilters()">
+                        <option value="default">Terbaru</option>
+                        <option value="price-asc">Harga: Rendah ke Tinggi</option>
+                        <option value="price-desc">Harga: Tinggi ke Rendah</option>
+                        <option value="pk-asc">PK: Kecil ke Besar</option>
+                        <option value="pk-desc">PK: Besar ke Kecil</option>
+                        <option value="name-asc">Nama: A-Z</option>
+                    </select>
+                </div>
+                <button class="filter-reset" onclick="resetFilters()">🔄 Reset</button>
+            </div>
+            <div class="active-filters" id="activeFilters"></div>
+        </div>
         
         <main class="main-content">
             <div class="promo-banner">
@@ -1744,28 +1854,312 @@
             currentFilter = brandId;
             document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
             document.querySelector(`[data-filter="${brandId}"]`).classList.add('active');
-            renderMarketplaceProducts();
+            applyFilters();
         }
         
-        function renderMarketplaceProducts() {
-            const filtered = currentFilter === 'all' ? products : products.filter(p => p.brand === currentFilter);
+        // Wishlist functionality
+        let wishlist = JSON.parse(localStorage.getItem('nalaWishlist') || '[]');
+        
+        window.isInWishlist = function(productId) {
+            return wishlist.includes(productId);
+        }
+        
+        window.toggleWishlist = function(productId) {
+            const index = wishlist.indexOf(productId);
+            if (index > -1) {
+                wishlist.splice(index, 1);
+                showToast('Dihapus dari wishlist');
+            } else {
+                wishlist.push(productId);
+                showToast('Ditambahkan ke wishlist! ❤️');
+            }
+            localStorage.setItem('nalaWishlist', JSON.stringify(wishlist));
+            document.getElementById('wishlist-icon-' + productId).textContent = isInWishlist(productId) ? '❤️' : '🤍';
+        }
+        
+        // Compare functionality
+        let compareList = [];
+        
+        window.isInCompare = function(productId) {
+            return compareList.includes(productId);
+        }
+        
+        window.toggleCompare = function(productId) {
+            const index = compareList.indexOf(productId);
+            if (index > -1) {
+                compareList.splice(index, 1);
+                document.getElementById('compare-icon-' + productId).textContent = '⚖️';
+            } else {
+                if (compareList.length >= 3) {
+                    showToast('Maksimal 3 produk untuk dibandingkan', 'error');
+                    return;
+                }
+                compareList.push(productId);
+                document.getElementById('compare-icon-' + productId).textContent = '✓';
+                showToast('Ditambahkan untuk perbandingan');
+            }
+            updateCompareBar();
+        }
+        
+        function updateCompareBar() {
+            let bar = document.getElementById('compareBar');
+            if (!bar) {
+                bar = document.createElement('div');
+                bar.id = 'compareBar';
+                bar.className = 'compare-bar';
+                document.body.appendChild(bar);
+            }
+            
+            if (compareList.length === 0) {
+                bar.classList.remove('show');
+                return;
+            }
+            
+            const items = compareList.map(id => {
+                const p = products.find(x => x.id === id);
+                return p ? `<div class="compare-item"><img src="${p.imageUrl || ''}" alt="${p.name}"><span>${p.name}</span><button onclick="toggleCompare('${id}')">×</button></div>` : '';
+            }).join('');
+            
+            bar.innerHTML = `
+                <div class="compare-content">
+                    <div class="compare-items">${items}</div>
+                    <button class="btn btn-primary" onclick="openCompareModal()" ${compareList.length < 2 ? 'disabled' : ''}>Bandingkan (${compareList.length})</button>
+                </div>
+            `;
+            bar.classList.add('show');
+        }
+        
+        window.openCompareModal = function() {
+            if (compareList.length < 2) return;
+            
+            const prods = compareList.map(id => products.find(p => p.id === id)).filter(p => p);
+            
+            const modal = document.createElement('div');
+            modal.className = 'modal-overlay show';
+            modal.id = 'compareModal';
+            modal.innerHTML = `
+                <div class="modal" style="max-width: 900px; max-height: 90vh; overflow-y: auto;">
+                    <div class="modal-header">
+                        <h2>⚖️ Perbandingan Produk</h2>
+                        <button class="modal-close" onclick="document.getElementById('compareModal').remove()">×</button>
+                    </div>
+                    <div class="modal-body" style="padding: 0;">
+                        <table class="compare-table">
+                            <tr>
+                                <th>Gambar</th>
+                                ${prods.map(p => `<td><img src="${p.imageUrl || ''}" style="width: 120px; height: 90px; object-fit: cover; border-radius: 8px;"></td>`).join('')}
+                            </tr>
+                            <tr>
+                                <th>Produk</th>
+                                ${prods.map(p => `<td><strong>${p.name}</strong></td>`).join('')}
+                            </tr>
+                            <tr>
+                                <th>Brand</th>
+                                ${prods.map(p => `<td>${getBrandName(p.brand)}</td>`).join('')}
+                            </tr>
+                            <tr>
+                                <th>Harga</th>
+                                ${prods.map(p => `<td style="color: var(--secondary); font-weight: 700;">${formatPrice(p.price)}</td>`).join('')}
+                            </tr>
+                            <tr>
+                                <th>PK</th>
+                                ${prods.map(p => `<td>${p.pk} PK</td>`).join('')}
+                            </tr>
+                            <tr>
+                                <th>Tipe</th>
+                                ${prods.map(p => `<td>${p.type}</td>`).join('')}
+                            </tr>
+                            <tr>
+                                <th>BTU</th>
+                                ${prods.map(p => `<td>${p.btu ? p.btu.toLocaleString() : '-'}</td>`).join('')}
+                            </tr>
+                            <tr>
+                                <th>Watt</th>
+                                ${prods.map(p => `<td>${p.watt ? p.watt + 'W' : '-'}</td>`).join('')}
+                            </tr>
+                            <tr>
+                                <th>Fitur</th>
+                                ${prods.map(p => `<td>${(p.features || []).join(', ') || '-'}</td>`).join('')}
+                            </tr>
+                            <tr>
+                                <th>Pipa</th>
+                                ${prods.map(p => `<td>${p.pipeSize && pricing.pipes && pricing.pipes[p.pipeSize] ? pricing.pipes[p.pipeSize].name : '-'}</td>`).join('')}
+                            </tr>
+                            <tr>
+                                <th>Kabel</th>
+                                ${prods.map(p => `<td>${p.cableSize && pricing.cables && pricing.cables[p.cableSize] ? pricing.cables[p.cableSize].name : '-'}</td>`).join('')}
+                            </tr>
+                            <tr>
+                                <th>Aksi</th>
+                                ${prods.map(p => `<td><button class="btn btn-primary" onclick="document.getElementById('compareModal').remove(); openRABModal('${p.id}')">+ Keranjang</button></td>`).join('')}
+                            </tr>
+                        </table>
+                    </div>
+                </div>
+            `;
+            document.body.appendChild(modal);
+        }
+        
+        // Advanced filtering
+        window.applyFilters = function() {
+            const pkFilter = document.getElementById('filterPK')?.value || '';
+            const typeFilter = document.getElementById('filterType')?.value || '';
+            const priceFilter = document.getElementById('filterPrice')?.value || '';
+            const featureFilter = document.getElementById('filterFeature')?.value || '';
+            const sortBy = document.getElementById('sortBy')?.value || 'default';
+            
+            let filtered = [...products];
+            
+            // Filter by brand
+            if (currentFilter !== 'all') {
+                filtered = filtered.filter(p => p.brand === currentFilter);
+            }
+            
+            // Filter by PK
+            if (pkFilter) {
+                filtered = filtered.filter(p => p.pk === pkFilter);
+            }
+            
+            // Filter by type
+            if (typeFilter) {
+                filtered = filtered.filter(p => p.type && p.type.includes(typeFilter));
+            }
+            
+            // Filter by price range
+            if (priceFilter) {
+                const [min, max] = priceFilter.split('-').map(Number);
+                filtered = filtered.filter(p => p.price >= min && p.price <= max);
+            }
+            
+            // Filter by feature
+            if (featureFilter) {
+                filtered = filtered.filter(p => p.features && p.features.includes(featureFilter));
+            }
+            
+            // Sort
+            switch (sortBy) {
+                case 'price-asc':
+                    filtered.sort((a, b) => a.price - b.price);
+                    break;
+                case 'price-desc':
+                    filtered.sort((a, b) => b.price - a.price);
+                    break;
+                case 'pk-asc':
+                    filtered.sort((a, b) => parseFloat(a.pk) - parseFloat(b.pk));
+                    break;
+                case 'pk-desc':
+                    filtered.sort((a, b) => parseFloat(b.pk) - parseFloat(a.pk));
+                    break;
+                case 'name-asc':
+                    filtered.sort((a, b) => a.name.localeCompare(b.name));
+                    break;
+            }
+            
+            renderFilteredProducts(filtered);
+            updateActiveFilters();
+        }
+        
+        window.resetFilters = function() {
+            if (document.getElementById('filterPK')) document.getElementById('filterPK').value = '';
+            if (document.getElementById('filterType')) document.getElementById('filterType').value = '';
+            if (document.getElementById('filterPrice')) document.getElementById('filterPrice').value = '';
+            if (document.getElementById('filterFeature')) document.getElementById('filterFeature').value = '';
+            if (document.getElementById('sortBy')) document.getElementById('sortBy').value = 'default';
+            currentFilter = 'all';
+            const allTab = document.querySelector('.nav-tab[data-filter="all"]');
+            if (allTab) {
+                document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+                allTab.classList.add('active');
+            }
+            applyFilters();
+        }
+        
+        function updateActiveFilters() {
+            const container = document.getElementById('activeFilters');
+            if (!container) return;
+            
+            const filters = [];
+            
+            const pk = document.getElementById('filterPK')?.value;
+            const type = document.getElementById('filterType')?.value;
+            const price = document.getElementById('filterPrice')?.value;
+            const feature = document.getElementById('filterFeature')?.value;
+            
+            if (currentFilter !== 'all') {
+                filters.push({ label: getBrandName(currentFilter), type: 'brand' });
+            }
+            if (pk) filters.push({ label: pk + ' PK', type: 'pk' });
+            if (type) filters.push({ label: type, type: 'type' });
+            if (price) {
+                const [min, max] = price.split('-').map(Number);
+                const label = max > 100000000 ? '> Rp 50jt' : 'Rp ' + (min/1000000) + '-' + (max/1000000) + 'jt';
+                filters.push({ label: label, type: 'price' });
+            }
+            if (feature) filters.push({ label: feature, type: 'feature' });
+            
+            if (filters.length === 0) {
+                container.innerHTML = '';
+                return;
+            }
+            
+            container.innerHTML = filters.map(f => 
+                `<span class="active-filter-tag">${f.label} <button onclick="clearFilterByType('${f.type}')">×</button></span>`
+            ).join('');
+        }
+        
+        window.clearFilterByType = function(type) {
+            switch(type) {
+                case 'brand':
+                    currentFilter = 'all';
+                    const allTab = document.querySelector('.nav-tab[data-filter="all"]');
+                    if (allTab) {
+                        document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+                        allTab.classList.add('active');
+                    }
+                    break;
+                case 'pk':
+                    document.getElementById('filterPK').value = '';
+                    break;
+                case 'type':
+                    document.getElementById('filterType').value = '';
+                    break;
+                case 'price':
+                    document.getElementById('filterPrice').value = '';
+                    break;
+                case 'feature':
+                    document.getElementById('filterFeature').value = '';
+                    break;
+            }
+            applyFilters();
+        }
+        
+        function renderFilteredProducts(filtered) {
             const grid = document.getElementById('productsGrid');
             
             if (filtered.length === 0) {
-                grid.innerHTML = '<div class="empty-state"><div class="empty-state-icon">📦</div><h3>Tidak ada produk</h3></div>';
+                grid.innerHTML = `
+                    <div class="empty-state" style="grid-column: 1/-1; text-align: center; padding: 60px 20px;">
+                        <div style="font-size: 60px; margin-bottom: 16px;">🔍</div>
+                        <h3 style="margin-bottom: 8px;">Tidak ada produk ditemukan</h3>
+                        <p style="color: var(--gray-400);">Coba ubah filter atau <a href="#" onclick="resetFilters(); return false;" style="color: var(--primary);">reset semua filter</a></p>
+                    </div>
+                `;
                 document.getElementById('productCount').textContent = '0 Produk';
                 return;
             }
             
+            // Store images for products
+            window.productImages = window.productImages || {};
+            filtered.forEach(p => {
+                const images = p.images && p.images.length > 0 ? p.images : (p.imageUrl ? [p.imageUrl] : []);
+                if (images.length > 0) {
+                    window.productImages[p.id] = images;
+                }
+            });
+            
             grid.innerHTML = filtered.map(p => {
                 const images = p.images && p.images.length > 0 ? p.images : (p.imageUrl ? [p.imageUrl] : []);
                 const hasMultipleImages = images.length > 1;
-                
-                // Store images in a global object instead of data attribute
-                if (images.length > 0) {
-                    window.productImages = window.productImages || {};
-                    window.productImages[p.id] = images;
-                }
                 
                 return `
                 <div class="product-card" data-product-id="${p.id}">
@@ -1784,6 +2178,9 @@
                             <span class="badge badge-brand">${getBrandName(p.brand)}</span>
                             ${p.features && p.features.includes('Inverter') ? '<span class="badge badge-inverter">INVERTER</span>' : ''}
                         </div>
+                        <button class="wishlist-btn" onclick="event.stopPropagation(); toggleWishlist('${p.id}')" title="Tambah ke Wishlist">
+                            <span id="wishlist-icon-${p.id}">${isInWishlist(p.id) ? '❤️' : '🤍'}</span>
+                        </button>
                     </div>
                     <div class="product-info">
                         <div class="product-brand">${getBrandName(p.brand)}</div>
@@ -1794,11 +2191,14 @@
                             ${p.btu ? `<span class="spec-tag">${p.btu.toLocaleString()} BTU</span>` : ''}
                         </div>
                         <div class="product-specs" style="margin-top: 4px;">
-                            ${p.pipeSize && pricing.pipes[p.pipeSize] ? `<span class="spec-tag">🔧 ${pricing.pipes[p.pipeSize].name}</span>` : ''}
-                            ${p.cableSize && pricing.cables[p.cableSize] ? `<span class="spec-tag">⚡ ${pricing.cables[p.cableSize].name}</span>` : ''}
+                            ${p.pipeSize && pricing.pipes && pricing.pipes[p.pipeSize] ? `<span class="spec-tag">🔧 ${pricing.pipes[p.pipeSize].name}</span>` : ''}
+                            ${p.cableSize && pricing.cables && pricing.cables[p.cableSize] ? `<span class="spec-tag">⚡ ${pricing.cables[p.cableSize].name}</span>` : ''}
                         </div>
                         <div class="product-price">${formatPrice(p.price)}</div>
                         <div class="product-actions">
+                            <button class="btn btn-outline-primary compare-btn" onclick="event.stopPropagation(); toggleCompare('${p.id}')" title="Bandingkan">
+                                <span id="compare-icon-${p.id}">${isInCompare(p.id) ? '✓' : '⚖️'}</span>
+                            </button>
                             <button class="btn btn-primary add-to-cart-btn" data-product-id="${p.id}">+ Keranjang</button>
                         </div>
                     </div>
@@ -1806,20 +2206,23 @@
             `;}).join('');
             
             document.getElementById('productCount').textContent = `${filtered.length} Produk`;
-            
-            // Add event listeners for product cards
+            attachProductEventListeners();
+        }
+        
+        function attachProductEventListeners() {
+            // Product card click
             document.querySelectorAll('.product-card').forEach(card => {
                 card.addEventListener('click', function(e) {
-                    if (!e.target.closest('.carousel-nav') && !e.target.closest('.carousel-dot') && !e.target.closest('.add-to-cart-btn') && !e.target.closest('.product-image')) {
+                    if (!e.target.closest('.carousel-nav') && !e.target.closest('.carousel-dot') && !e.target.closest('.add-to-cart-btn') && !e.target.closest('.product-image') && !e.target.closest('.wishlist-btn') && !e.target.closest('.compare-btn')) {
                         openRABModal(this.dataset.productId);
                     }
                 });
             });
             
-            // Add event listeners for product images - open lightbox
+            // Product images - open lightbox
             document.querySelectorAll('.product-image').forEach(imgContainer => {
                 imgContainer.addEventListener('click', function(e) {
-                    if (e.target.closest('.carousel-nav') || e.target.closest('.carousel-dot')) return;
+                    if (e.target.closest('.carousel-nav') || e.target.closest('.carousel-dot') || e.target.closest('.wishlist-btn')) return;
                     const card = this.closest('.product-card');
                     const productId = card.dataset.productId;
                     const currentIndex = parseInt(this.querySelector('img')?.dataset?.index || 0);
@@ -1827,7 +2230,7 @@
                 });
             });
             
-            // Add event listeners for add to cart buttons
+            // Add to cart buttons
             document.querySelectorAll('.add-to-cart-btn').forEach(btn => {
                 btn.addEventListener('click', function(e) {
                     e.stopPropagation();
@@ -1835,7 +2238,7 @@
                 });
             });
             
-            // Add event listeners for carousel navigation
+            // Carousel navigation
             document.querySelectorAll('.carousel-nav').forEach(btn => {
                 btn.addEventListener('click', function(e) {
                     e.stopPropagation();
@@ -1843,13 +2246,17 @@
                 });
             });
             
-            // Add event listeners for carousel dots
+            // Carousel dots
             document.querySelectorAll('.carousel-dot').forEach(dot => {
                 dot.addEventListener('click', function(e) {
                     e.stopPropagation();
                     goToImage(this.dataset.product, parseInt(this.dataset.index));
                 });
             });
+        }
+        
+        function renderMarketplaceProducts() {
+            applyFilters();
         }
         
         // Carousel functions
@@ -2012,56 +2419,18 @@
         
         window.searchProducts = function() {
             const query = document.getElementById('searchInput').value.toLowerCase();
-            const filtered = products.filter(p => {
+            
+            if (!query) {
+                applyFilters();
+                return;
+            }
+            
+            let filtered = products.filter(p => {
                 const brandName = getBrandName(p.brand).toLowerCase();
-                return p.name.toLowerCase().includes(query) || brandName.includes(query);
+                return p.name.toLowerCase().includes(query) || brandName.includes(query) || (p.type && p.type.toLowerCase().includes(query));
             });
             
-            const grid = document.getElementById('productsGrid');
-            
-            // Store images for filtered products
-            window.productImages = window.productImages || {};
-            filtered.forEach(p => {
-                const images = p.images && p.images.length > 0 ? p.images : (p.imageUrl ? [p.imageUrl] : []);
-                if (images.length > 0) {
-                    window.productImages[p.id] = images;
-                }
-            });
-            
-            grid.innerHTML = filtered.map(p => {
-                const images = p.images && p.images.length > 0 ? p.images : (p.imageUrl ? [p.imageUrl] : []);
-                return `
-                <div class="product-card" data-product-id="${p.id}">
-                    <div class="product-image">
-                        ${images.length > 0 ? `<img src="${images[0]}">` : `<div class="product-image-placeholder"><span class="ac-icon">❄️</span></div>`}
-                        <div class="product-badges"><span class="badge badge-brand">${getBrandName(p.brand)}</span></div>
-                    </div>
-                    <div class="product-info">
-                        <div class="product-brand">${getBrandName(p.brand)}</div>
-                        <div class="product-name">${p.name} ${p.pk} PK</div>
-                        <div class="product-price">${formatPrice(p.price)}</div>
-                        <div class="product-actions"><button class="btn btn-primary add-to-cart-btn" data-product-id="${p.id}">+ Keranjang</button></div>
-                    </div>
-                </div>
-            `;}).join('');
-            
-            document.getElementById('productCount').textContent = `${filtered.length} Produk`;
-            
-            // Re-attach event listeners
-            document.querySelectorAll('.product-card').forEach(card => {
-                card.addEventListener('click', function(e) {
-                    if (!e.target.closest('.add-to-cart-btn')) {
-                        openRABModal(this.dataset.productId);
-                    }
-                });
-            });
-            
-            document.querySelectorAll('.add-to-cart-btn').forEach(btn => {
-                btn.addEventListener('click', function(e) {
-                    e.stopPropagation();
-                    openRABModal(this.dataset.productId);
-                });
-            });
+            renderFilteredProducts(filtered);
         }
 
         // ==================== RAB MODAL ====================
